@@ -163,7 +163,7 @@ cython_debug/
 .DS_STORE
 
 # Others
-*log*
+*logs*
 *checkpoint*
 *ckpt*
 *.pkl
