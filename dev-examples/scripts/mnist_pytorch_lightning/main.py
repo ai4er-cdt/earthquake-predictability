@@ -9,7 +9,7 @@ from torchvision import transforms
 from torchvision.datasets import MNIST
 
 BASE_PATH = "/gws/nopw/j04/ai4er/users/pn341/earthquake-prediction/dev-examples/scripts/mnist_pytorch_lightning"
-
+DATASET_PATH = "/gws/nopw/j04/ai4er/users/pn341/datasets/mnist"
 
 class MNISTModel(pl.LightningModule):
     def __init__(self):
@@ -43,7 +43,7 @@ class MNISTModel(pl.LightningModule):
     def train_dataloader(self):
         return DataLoader(
             MNIST(
-                "/gws/nopw/j04/ai4er/users/pn341/datasets/mnist",
+                DATASET_PATH,
                 train=True,
                 download=True,
                 transform=transforms.ToTensor(),
@@ -54,7 +54,7 @@ class MNISTModel(pl.LightningModule):
     def val_dataloader(self):
         return DataLoader(
             MNIST(
-                "/gws/nopw/j04/ai4er/users/pn341/datasets/mnist",
+                DATASET_PATH,
                 train=False,
                 download=True,
                 transform=transforms.ToTensor(),
@@ -65,7 +65,7 @@ class MNISTModel(pl.LightningModule):
     def test_dataloader(self):
         return DataLoader(
             MNIST(
-                "/gws/nopw/j04/ai4er/users/pn341/datasets/mnist",
+                DATASET_PATH,
                 train=False,
                 download=True,
                 transform=transforms.ToTensor(),
