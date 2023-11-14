@@ -1,4 +1,4 @@
-# AI4ER MRes - Earthquake Predictability
+# AI4ER MRes GTC - Earthquake Predictability
 
 <table>
   <tr align="center">
