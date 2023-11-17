@@ -100,7 +100,7 @@ Sources:\
 <table>
   <tr>
     <td><img src="assets/images/camilla_billari.jpg" alt="Camilla Billari" style="border-radius: 50%; width: 50px; height: 50px;"></td>
-    <td><a href="mailto:cgb47@cam.ac.uk">amilla Billari</a></td>
+    <td><a href="mailto:cgb47@cam.ac.uk">Camilla Billari</a></td>
     <td><img src="assets/images/pritthijit_nath.jpg" alt="Pritthijit Nath" style="border-radius: 50%; width: 50px; height: 50px;"></td>
     <td><a href="mailto:pn341@cam.ac.uk">Pritthijit Nath</a></td>
     <td><img src="assets/images/jakob_poffley.jpg" alt="Jakob Poffley" style="border-radius: 50%; width: 50px; height: 50px;"></td>
