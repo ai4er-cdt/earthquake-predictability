@@ -108,7 +108,7 @@ Sources:\
   </tr>
   <tr>
     <td><img src="assets/images/tom_ratsakatika.jpg" alt="Tom Ratsakatika" style="border-radius: 50%; width: 50px; height: 50px;"></td>
-    <td><a href="mailto:trr26@cam.ac.uk">om Ratsakatika</a></td>
+    <td><a href="mailto:trr26@cam.ac.uk">Tom Ratsakatika</a></td>
      <td><img src="assets/images/alexandre_shinebourne.jpg" alt="Alexandre Shinebourne" style="border-radius: 50%; width: 50px; height: 50px;"></td>
     <td><a href="mailto:ajs361@cam.ac.uk">lexandre Shinebourne</a></td>
   </tr>
