@@ -4,8 +4,6 @@ Created on Wed Jan 11 10:46:28 2023
 @author: vinco
 """
 
-import time
-
 import h5py
 import numpy as np
 
@@ -215,8 +213,6 @@ def load_data(exp, dirs, params):
 
 
 def import_data(dirs, filename, parameters):
-    time.sleep(0.5)
-
     struct = parameters["struct_type"]
     file_format = parameters["file_format"]
 
