@@ -104,7 +104,7 @@ Sources:\
     <td><img src="assets/images/pritthijit_nath.jpg" alt="Pritthijit Nath" style="border-radius: 50%; width: 50px; height: 50px;"></td>
     <td><a href="mailto:pn341@cam.ac.uk">Pritthijit Nath</a></td>
     <td><img src="assets/images/jakob_poffley.jpg" alt="Jakob Poffley" style="border-radius: 50%; width: 50px; height: 50px;"></td>
-    <td><a href="mailto:jp861@cam.ac.uk">akob Poffley</a></td>
+    <td><a href="mailto:jp861@cam.ac.uk">Jakob Poffley</a></td>
   </tr>
   <tr>
     <td><img src="assets/images/tom_ratsakatika.jpg" alt="Tom Ratsakatika" style="border-radius: 50%; width: 50px; height: 50px;"></td>
