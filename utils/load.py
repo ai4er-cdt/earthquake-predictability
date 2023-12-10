@@ -67,13 +67,13 @@ def load_data(exp, dirs, params):
         # NormalStressobs_det = NormalStressobs - (p[0] * t + p[1])
         del p
         # detrend observed displacement
-        p = np.polyfit(t, ecDispobs, deg=1)
-        # ecDispobs_det = ecDispobs - (p[0] * t + p[1])
-        del p
+        # p = np.polyfit(t, ecDispobs, deg=1)
+        # # ecDispobs_det = ecDispobs - (p[0] * t + p[1])
+        # del p
         # detrend shear strain
-        p = np.polyfit(t, ShearStrainobs, deg=2)
-        # ShearStrainobs_det = ShearStrainobs - (p[0] * t**2 + p[1] * t + p[2])
-        del p
+        # p = np.polyfit(t, ShearStrainobs, deg=2)
+        # # ShearStrainobs_det = ShearStrainobs - (p[0] * t**2 + p[1] * t + p[2])
+        # del p
 
         # observed data
         X = np.array([ShearStressobs_det]).T
