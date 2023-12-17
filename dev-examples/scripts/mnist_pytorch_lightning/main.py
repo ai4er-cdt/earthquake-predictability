@@ -2,14 +2,17 @@ import pytorch_lightning as pl
 import torch
 from pytorch_lightning import Trainer, loggers
 from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.strategies import DDPStrategy
 from torch.nn import functional as F
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision import transforms
 from torchvision.datasets import MNIST
 
-BASE_PATH = "/gws/nopw/j04/ai4er/users/pn341/earthquake-prediction/dev-examples/scripts/mnist_pytorch_lightning"
+BASE_PATH = "/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/dev-examples/scripts/mnist_pytorch_lightning"
 DATASET_PATH = "/gws/nopw/j04/ai4er/users/pn341/datasets/mnist"
+CPU_CORES = 4
+
 
 class MNISTModel(pl.LightningModule):
     def __init__(self):
@@ -22,19 +25,19 @@ class MNISTModel(pl.LightningModule):
     def training_step(self, batch, batch_nb):
         x, y = batch
         loss = F.cross_entropy(self(x), y)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, sync_dist=True)
         return {"loss": loss, "log": {"train_loss": loss}}
 
     def validation_step(self, batch, batch_nb):
         x, y = batch
         loss = F.cross_entropy(self(x), y)
-        self.log("valid_loss", loss)
+        self.log("valid_loss", loss, sync_dist=True)
         return {"loss": loss, "log": {"valid_loss": loss}}
 
     def test_step(self, batch, batch_nb):
         x, y = batch
         loss = F.cross_entropy(self(x), y)
-        self.log("test_loss", loss)
+        self.log("test_loss", loss, sync_dist=True)
         return {"loss": loss, "log": {"test_loss": loss}}
 
     def configure_optimizers(self):
@@ -49,6 +52,7 @@ class MNISTModel(pl.LightningModule):
                 transform=transforms.ToTensor(),
             ),
             batch_size=64,
+            num_workers=CPU_CORES,
         )
 
     def val_dataloader(self):
@@ -60,6 +64,7 @@ class MNISTModel(pl.LightningModule):
                 transform=transforms.ToTensor(),
             ),
             batch_size=64,
+            num_workers=CPU_CORES,
         )
 
     def test_dataloader(self):
@@ -71,6 +76,7 @@ class MNISTModel(pl.LightningModule):
                 transform=transforms.ToTensor(),
             ),
             batch_size=64,
+            num_workers=CPU_CORES,
         )
 
 
@@ -83,7 +89,7 @@ if __name__ == "__main__":
 
     checkpoint_callback = ModelCheckpoint(
         dirpath=f"{BASE_PATH}/checkpoints/",
-        filename="mnist-{epoch:02d}-{val_loss:.2f}",
+        filename="mnist-{epoch:02d}-{valid_loss:.2f}",
         save_top_k=3,
         verbose=True,
         monitor="valid_loss",
@@ -91,27 +97,29 @@ if __name__ == "__main__":
     )
 
     # Interactive GPU Host Training
+    # trainer = Trainer(
+    #     accelerator="auto",
+    #     max_epochs=5,
+    #     deterministic=True,
+    #     logger=logger,
+    #     callbacks=[checkpoint_callback],
+    # )
+
+    # SLURM Computing Cluster 2-Node Multi-GPU Training
+    ddp = DDPStrategy(process_group_backend="gloo")
     trainer = Trainer(
-        accelerator="auto",
+        devices=4,
+        accelerator="gpu",
+        strategy=ddp,
         max_epochs=5,
+        num_nodes=2,
         deterministic=True,
         logger=logger,
         callbacks=[checkpoint_callback],
     )
 
-    # SLURM Computing Cluster Training
-    # trainer = Trainer(devices=4,
-    #                   accelerator='gpu',
-    #                   strategy='ddp',
-    #                   max_epochs=5,
-    #                   num_nodes=1,
-    #                   deterministic=True,
-    #                   logger=logger,
-    #                   callbacks=[checkpoint_callback]
-    # )
-
     trainer.fit(model)
-    trainer.test()
+    # trainer.test()
 
     model_path = f"{BASE_PATH}/checkpoints/mnist_final.ckpt"
     trainer.save_checkpoint(model_path)
