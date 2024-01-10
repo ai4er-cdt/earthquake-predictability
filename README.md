@@ -2,18 +2,6 @@
 
 <table>
   <tr align="center">
-    <!-- AI4ER Logo -->
-    <td align="center">
-    </td>
-    <!-- AI4ER Logo -->
-    <td align="center">
-      <img src="assets/images/logo_placeholder.svg" alt="Placeholder logo" width="400" />
-    </td>
-    <!-- AI4ER Logo -->
-    <td align="center">
-    </td>
-  </tr>
-  <tr align="center">
     <!-- UKRI Logo -->
     <td align="center">
       <img src="assets/images/logo_ukri.png" alt="UKRI Logo" width="400" />
