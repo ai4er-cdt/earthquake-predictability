@@ -101,7 +101,11 @@ def set_param(exp):
             "data_type": "lab",
             "file_format": "txt",
             "vl": None,
+            "obs_unit": "MPa",  # this is a guess, added by T. Ratsakatika
+            "time_unit": "s",   # this is a guess, added by T. Ratsakatika
         }
+        parameters["obs_label"] = r"$\tau_f$ [" + parameters["obs_unit"] + "]"
+        parameters["time_label"] = r"Time [" + parameters["time_unit"] + "]"
     elif exp == "sim_b698":
         parameters = {
             "t0": 0.0,
