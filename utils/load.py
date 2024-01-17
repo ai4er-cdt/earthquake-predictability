@@ -10,7 +10,7 @@ import numpy as np
 
 def load_data(exp, dirs, params):
     """
-    data_type : 'lab', 'nature', 'sim'
+    data_type : 'lab', 'nature', 'synthetic'
     struct_type : 'MeleVeeduetal2020', 'Marone_p4581', 'Marone'
     """
 
