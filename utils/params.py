@@ -10,21 +10,21 @@ def set_param(exp):
         parameters = {
             # Time interval to load from the experiment (don't load the begining
             # as the slip stick cycle does not start immediately and don't load
-            # the end of experiment as we do not include friction evolution 
+            # the end of experiment as we do not include friction evolution
             # effects in the model)
-            "t0": 11100.0, # index of initial time to load from the experiment
-            "tend": 11300.0, # index of final time to load from the experiment?
-            "Nheaders": 2, # Number of header lines in the data file (name, units)
-            "dir_data": "gtc_quakes_data/labquakes/", # Path lab data repository
-            "case_study": "MeleVeeduetal2020/b698", # Path to experiment data
+            "t0": 11100.0,  # index of initial time to load from the experiment
+            "tend": 11300.0,  # index of final time to load from the experiment?
+            "Nheaders": 2,  # Number of header lines in the data file (name, units)
+            "dir_data": "gtc_quakes_data/labquakes/",  # Path lab data repository
+            "case_study": "MeleVeeduetal2020/b698",  # Path to experiment data
             "data_type": "lab",
             "struct_type": "MeleVeeduetal2020",
             "file_format": "txt",
-            "downsample_factor": 1, # FIXME: what is this?
-            "vl": 10, # FIXME: what is this?
+            "downsample_factor": 1,  # FIXME: what is this?
+            "vl": 10,  # FIXME: what is this?
             "segment": None,
-            "obs_unit": "MPa", # Units for shear stress
-            "time_unit": "s", # Units for time
+            "obs_unit": "MPa",  # Units for shear stress
+            "time_unit": "s",  # Units for time
         }
         # Add labels appropriate for the units
         parameters["obs_label"] = r"$\tau_f$ [" + parameters["obs_unit"] + "]"
@@ -100,9 +100,10 @@ def set_param(exp):
             "struct_type": "Marone_p4581",
             "data_type": "lab",
             "file_format": "txt",
+            "downsample_factor": 1,
             "vl": None,
             "obs_unit": "MPa",  # this is a guess, added by T. Ratsakatika
-            "time_unit": "s",   # this is a guess, added by T. Ratsakatika
+            "time_unit": "s",  # this is a guess, added by T. Ratsakatika
         }
         parameters["obs_label"] = r"$\tau_f$ [" + parameters["obs_unit"] + "]"
         parameters["time_label"] = r"Time [" + parameters["time_unit"] + "]"
