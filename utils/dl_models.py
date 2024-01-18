@@ -15,8 +15,10 @@ sys.path.append(MAIN_DICT)
 def save_model(
     model,
     input,
-    predictions,
-    index=None,
+    pred,
+    pred_index,
+    fcast,
+    fcast_index,
     model_name=None,
     directory=RESULTS_DIRECTORY,
 ):
@@ -28,14 +30,20 @@ def save_model(
     model_path = os.path.join(directory, base_filename + "_model.pth")
     torch.save(model.state_dict(), model_path)
 
-    data = {"input": input, "predictions": predictions, "index": index}
+    data = {
+        "input": input,
+        "pred": pred,
+        "pred_index": pred_index,
+        "fcast": fcast,
+        "fcast_index": fcast_index,
+    }
 
     data_path = os.path.join(directory, base_filename + "_data.pt")
     with open(data_path, "wb") as f:
         pickle.dump(data, f)
 
     print(f"model saved to {model_path}")
-    print(f"input & predictions saved to {data_path}")
+    print(f"input, predictions and forecasts saved to {data_path}")
 
 
 def load_model(model, model_path, data_path):
