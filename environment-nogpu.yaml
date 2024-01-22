@@ -1,0 +1,20 @@
+name: gtc_env
+channels:
+  - defaults
+dependencies:
+  - anaconda
+  - git
+  - h5netcdf
+  - h5py
+  - ipympl
+  - matplotlib
+  - netcdf4
+  - numpy
+  - pre_commit
+  - python=3.11.5
+  - scikit-learn
+  - seaborn
+  - tqdm
+  - xarray
+  - pytorch
+  - torchvision
