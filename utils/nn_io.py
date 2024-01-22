@@ -17,8 +17,6 @@ def save_model(
     input,
     pred,
     pred_index,
-    fcast,
-    fcast_index,
     model_name=None,
     directory=RESULTS_DIRECTORY,
 ):
@@ -34,8 +32,6 @@ def save_model(
         "input": input,
         "pred": pred,
         "pred_index": pred_index,
-        "fcast": fcast,
-        "fcast_index": fcast_index,
     }
 
     data_path = os.path.join(directory, base_filename + "_data.pt")
