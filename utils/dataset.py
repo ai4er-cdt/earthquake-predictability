@@ -64,6 +64,12 @@ class SlowEarthquakeDataset:
                     ],
                     "t": "time",
                 }
+            elif params["data_type"] == "nature":
+                dataset["hdrs"] = {
+                    "X": "seg_avg",
+                    "Y": [f"seg_{x}" for x in range(196)],
+                    "t": "time",
+                }
             else:
                 dataset["hdrs"] = None
             self.dataset[exp] = dataset
