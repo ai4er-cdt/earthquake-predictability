@@ -175,3 +175,7 @@ cython_debug/
 *.pkl
 
 .ruff_cache
+
+# Files required to run on local machine that should not be copied to GitHub
+notebooks/LSTM_bestmodel.pt
+data_local/
