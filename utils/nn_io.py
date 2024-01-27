@@ -3,8 +3,10 @@ import os
 import pickle
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import torch
+from gluonts.model.predictor import Predictor
 
 MAIN_DICT = "/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability"
 RESULTS_DIRECTORY = f"{MAIN_DICT}/results"
@@ -19,14 +21,24 @@ def save_model(
     pred_index,
     model_name=None,
     directory=RESULTS_DIRECTORY,
+    gluon_ts=False,
 ):
     current_time = datetime.now().isoformat(timespec="seconds")
 
     base_filename = model_name if model_name else getpass.getuser()
     base_filename += "_" + current_time
 
-    model_path = os.path.join(directory, base_filename + "_model.pth")
-    torch.save(model.state_dict(), model_path)
+    if gluon_ts:
+        model_dir = os.path.join(directory, base_filename + "_gluonts")
+        os.makedirs(model_dir)
+        data_path = model_dir + "/data.pkl"
+        model.serialize(Path(model_dir))
+    else:
+        model_dir = os.path.join(directory, base_filename + "_torch")
+        os.makedirs(model_dir)
+        model_path = model_dir + "/model.pt"
+        data_path = model_dir + "/data.pkl"
+        torch.save(model.state_dict(), model_path)
 
     data = {
         "input": input,
@@ -34,28 +46,28 @@ def save_model(
         "pred_index": pred_index,
     }
 
-    data_path = os.path.join(directory, base_filename + "_data.pt")
     with open(data_path, "wb") as f:
         pickle.dump(data, f)
 
-    print(f"model saved to {model_path}")
-    print(f"input, predictions and forecasts saved to {data_path}")
+    print(f"model and data saved to {model_dir}")
 
 
-def load_model(model, model_path, data_path):
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model file not found: {model_path}")
+def load_model(model, model_dir, gluon_ts=False):
+    if not os.path.exists(model_dir):
+        raise FileNotFoundError(f"Model dir not found: {model_dir}")
 
-    if not os.path.exists(data_path):
-        raise FileNotFoundError(f"Data file not found: {data_path}")
+    model_path = model_dir + "/model.pt"
+    data_path = model_dir + "/data.pkl"
 
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
+    if gluon_ts:
+        model = Predictor.deserialize(Path(model_dir))
+    else:
+        model.load_state_dict(torch.load(model_path))
+        model.eval()
 
     with open(data_path, "rb") as f:
         data = pickle.load(f)
 
-    print(f"model loaded from {model_path}")
-    print(f"input & predictions loaded from {data_path}")
+    print(f"model and data loaded from {model_dir}")
 
     return model, data
