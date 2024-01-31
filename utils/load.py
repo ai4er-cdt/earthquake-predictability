@@ -18,12 +18,12 @@ def load_data(exp, dirs, params):
     if params["data_type"] == "lab":
         # Build the correct filepath for the data
         filename = (
-            dirs["data"] # e.g. gtc_quakes_data/labquakes/
-            + params["case_study"] # e.g. MeleVeeduetal2020, Marone
+            dirs["data"]  # e.g. gtc_quakes_data/labquakes/
+            + params["case_study"]  # e.g. MeleVeeduetal2020, Marone
             + "/"
-            + exp # e.g. b698
+            + exp  # e.g. b698
             + "."
-            + params["file_format"] # e.g. txt, csv, h5
+            + params["file_format"]  # e.g. txt, csv, h5
         )
 
         data = import_data(dirs, filename, params)
@@ -33,11 +33,11 @@ def load_data(exp, dirs, params):
         # 	   'Normal Stress (MPa)', 'Elastic Corrected Displacement (mm)', \
         # 	   'Friction coefficient mu', 'Shear Strain']
 
-        # Attempt to load the observed shear stress, normal stress, 
+        # Attempt to load the observed shear stress, normal stress,
         # displacement, and shear strain from the data
         ShearStressobs = data["ShearStress"]
         NormalStressobs = data["NormStress"]
-        # Have to use try/except because not all data has displacement and 
+        # Have to use try/except because not all data has displacement and
         # strain
         try:
             ecDispobs = data["ecDisp"]
@@ -62,11 +62,11 @@ def load_data(exp, dirs, params):
 
         # Detrend shear stress, normal stress, displacement, and shear strain
         # np.polyfit() fits a polynomial to the data e.g. y = Ax^2 + Bx + C (deg=2)
-        # Here we fit a line to the data (deg=1) and then subtract it from the 
+        # Here we fit a line to the data (deg=1) and then subtract it from the
         # data in order to detrend it
-        p = np.polyfit(t, ShearStressobs, deg=1)
-        ShearStressobs_det = ShearStressobs - (p[0] * t + p[1])
-        del p # Delete the polynomial fit
+        # p = np.polyfit(t, ShearStressobs, deg=1)
+        # ShearStressobs_det = ShearStressobs - (p[0] * t + p[1])
+        # del p # Delete the polynomial fit
 
         # p = np.polyfit(t, NormalStressobs, deg=1)
         # NormalStressobs_det = NormalStressobs - (p[0] * t + p[1])
@@ -81,7 +81,7 @@ def load_data(exp, dirs, params):
         # del p
 
         # Set X to the detrended observed shear stress
-        X = np.array([ShearStressobs_det]).T
+        X = np.array([ShearStressobs]).T
 
         # Set dt to the observed time step
         dt = t[1] - t[0]
@@ -97,9 +97,7 @@ def load_data(exp, dirs, params):
 
         # Set Y to the non-detrended observed shear stress, normal stress,
         # displacement, and shear strain
-        Y = np.array(
-            [ShearStressobs, NormalStressobs, ecDispobs, ShearStrainobs]
-        ).T
+        Y = np.array([NormalStressobs, ecDispobs, ShearStrainobs]).T
     elif params["data_type"] == "nature":
         f = h5py.File(
             dirs["data"] + params["case_study"] + "." + params["file_format"],
@@ -168,21 +166,21 @@ def load_data(exp, dirs, params):
         ShearStressobs = (tau0 + a * sigman0 * sol_u[sol_t > Tmin, 1]) / 1e6
         NormStressobs = sigman + (sigman * a / mu0) * sol_u[sol_t > Tmin, 2]
 
-        p = np.polyfit(t, ShearStressobs, deg=1)
-        ShearStressobs_det = ShearStressobs - (p[0] * t + p[1])
-        del p
+        # p = np.polyfit(t, ShearStressobs, deg=1)
+        # ShearStressobs_det = ShearStressobs - (p[0] * t + p[1])
+        # del p
 
-        p = np.polyfit(t, NormStressobs, deg=1)
-        NormStressobs_det = NormStressobs - (p[0] * t + p[1])
-        del p
+        # p = np.polyfit(t, NormStressobs, deg=1)
+        # NormStressobs_det = NormStressobs - (p[0] * t + p[1])
+        # del p
 
         # observed data
-        X = np.array([ShearStressobs_det]).T
+        X = np.array([ShearStressobs]).T
 
         # observed time step
         dt = t[1] - t[0]
 
-        Y = np.array([ShearStressobs_det, NormStressobs_det]).T
+        Y = np.array([NormStressobs]).T
 
     elif params["data_type"] == "gnss":
         data_e = np.loadtxt(
@@ -226,7 +224,7 @@ def import_data(dirs, filename, parameters):
     if struct == "MeleVeeduetal2020":
         if file_format == "txt":
             f = open(filename, "r")
-            
+
             # Get a count of the number of lines in the file
             L = 0
             for line in f:
@@ -237,22 +235,28 @@ def import_data(dirs, filename, parameters):
             # Remove the number of header lines from the count
             Nheaders = parameters["Nheaders"]
             L = L - Nheaders
-            
+
             # Create empty arrays for each column of data with the correct size
-            Rec = np.empty([L, 1]) # Record number
-            LPDisp = np.empty([L, 1]) # Loading point displacement
-            LayerThick = np.empty([L, 1]) # FIXME: What is layer thickness important for?
-            ShearStress = np.empty([L, 1]) # Shear stress
-            NormStress = np.empty([L, 1]) # Normal stress
-            OnBoard = np.empty([L, 1]) # FIXME: What is OnBoard important for?
-            Time = np.empty([L, 1]) # Time
-            Rec_float = np.empty([L, 1]) # Record number as a float (for some reason)
-            TimeOnBoard = np.empty([L, 1]) # FIXME: What is TimeOnBoard important for?
-            ecDisp = np.empty([L, 1]) # Elastic corrected displacement
-            mu = np.empty([L, 1]) # Friction coefficient
-            ShearStrain = np.empty([L, 1]) # Shear strain
-            slip_velocity = np.empty([L, 1]) # Slip velocity
-            
+            Rec = np.empty([L, 1])  # Record number
+            LPDisp = np.empty([L, 1])  # Loading point displacement
+            LayerThick = np.empty(
+                [L, 1]
+            )  # FIXME: What is layer thickness important for?
+            ShearStress = np.empty([L, 1])  # Shear stress
+            NormStress = np.empty([L, 1])  # Normal stress
+            OnBoard = np.empty([L, 1])  # FIXME: What is OnBoard important for?
+            Time = np.empty([L, 1])  # Time
+            Rec_float = np.empty(
+                [L, 1]
+            )  # Record number as a float (for some reason)
+            TimeOnBoard = np.empty(
+                [L, 1]
+            )  # FIXME: What is TimeOnBoard important for?
+            ecDisp = np.empty([L, 1])  # Elastic corrected displacement
+            mu = np.empty([L, 1])  # Friction coefficient
+            ShearStrain = np.empty([L, 1])  # Shear strain
+            slip_velocity = np.empty([L, 1])  # Slip velocity
+
             # Re-open file and load the data from the file into the arrays
             ll = -1
             tt = -1
@@ -285,7 +289,6 @@ def import_data(dirs, filename, parameters):
                 if x >= parameters["t0"] and x <= parameters["tend"]
             ]
 
-            
             data_output = {
                 "Rec": Rec[ind_keep, 0],
                 "LPDisp": LPDisp[ind_keep, 0],

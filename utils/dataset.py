@@ -1,6 +1,8 @@
 import sys
 from concurrent.futures import ProcessPoolExecutor
 
+import numpy as np
+
 from utils.load import load_data
 from utils.params import set_param
 
@@ -20,6 +22,34 @@ EXPERIMENTS = [
 ]
 
 CPU_COUNT = 4
+
+
+def create_sequences(data, lookback, forecast):
+    xs, ys = [], []
+    for i in range(len(data) - lookback - forecast + 1):
+        x = data[i : (i + lookback)]
+        y = data[(i + lookback) : (i + lookback + forecast)]
+        xs.append(x)
+        ys.append(y)
+    return np.array(xs), np.array(ys)
+
+
+class Detrender:
+    def __init__(self):
+        self.p = None
+
+    def fit(self, x):
+        t = np.array(range(0, len(x)))
+        self.p = np.polyfit(t, x[:, 0], deg=1)
+
+    def transform(self, x):
+        t = np.array(range(0, len(x)))
+        x_det = x - (self.p[0] * t + self.p[1]).reshape(-1, 1)
+        return x_det
+
+    def fit_transform(self, x):
+        self.fit(x)
+        return self.transform(x)
 
 
 class SlowEarthquakeDataset:
@@ -46,9 +76,8 @@ class SlowEarthquakeDataset:
 
             if params["data_type"] == "lab":
                 dataset["hdrs"] = {
-                    "X": "det_shear_stress",
+                    "X": "obs_shear_stress",
                     "Y": [
-                        "obs_shear_stress",
                         "obs_normal_stress",
                         "obs_ecdisp",
                         "obs_shear_strain",
@@ -57,10 +86,9 @@ class SlowEarthquakeDataset:
                 }
             elif params["data_type"] == "synthetic":
                 dataset["hdrs"] = {
-                    "X": "det_shear_stress",
+                    "X": "obs_shear_stress",
                     "Y": [
-                        "det_shear_stress",
-                        "det_normal_stress",
+                        "obs_normal_stress",
                     ],
                     "t": "time",
                 }
