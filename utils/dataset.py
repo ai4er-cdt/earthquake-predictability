@@ -21,7 +21,9 @@ EXPERIMENTS = [
     "sim_i417",
 ]
 
-CPU_COUNT = 4
+EXPERIMENTS += [f"cascadia_{x}_seg" for x in range(0, 14)]
+
+CPU_COUNT = 8
 
 
 def create_sequences(data, lookback, forecast):
@@ -62,7 +64,9 @@ class SlowEarthquakeDataset:
             return self.dataset[exp]
 
         if exp in EXPERIMENTS:
-            params = set_param(exp)
+            params = set_param("cascadia" if "_seg" in exp else exp)
+            if "_seg" in exp:
+                params["segment"] = int(exp.split("_")[1])
             dirs = {"main": MAIN_DICT}
             dirs["data"] = dirs["main"] + "/data/" + params["dir_data"]
             X, Y, t, dt, vl = load_data(exp, dirs, params)
@@ -95,7 +99,7 @@ class SlowEarthquakeDataset:
             elif params["data_type"] == "nature":
                 dataset["hdrs"] = {
                     "X": "seg_avg",
-                    "Y": [f"seg_{x}" for x in range(196)],
+                    "Y": [f"seg_{x}" for x in range(Y.shape[1])],
                     "t": "time",
                 }
             else:
