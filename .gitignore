@@ -179,3 +179,4 @@ cython_debug/
 # Files required to run on local machine that should not be copied to GitHub
 notebooks/LSTM_bestmodel.pt
 data_local/
+notebooks/local_paths.py
