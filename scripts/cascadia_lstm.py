@@ -29,8 +29,8 @@ SMOOTHING_WINDOW = 5 # moving average window size
 DOWNSAMPLING_FACTOR = 1
 
 # Dataset parameters
-LOOKBACK, FORECAST = 80, 30 # lookback and forecast values
-N_FORECAST_WINDOWS = 30 # n forecasted windows in test set
+LOOKBACK, FORECAST = 150, 14 # lookback and forecast values
+N_FORECAST_WINDOWS = 40 # n forecasted windows in test set
 
 # For LSTM config
 N_VARIATES = 1
@@ -42,6 +42,7 @@ OUTPUT_SIZE = FORECAST
 N_EPOCHS = 75
 
 # For plotting results
+PLOTTING = True
 TITLE = "Original Time Series and Model Predictions of Segment 1 sum"
 X_LABEL = "Time (days)"
 Y_LABEL = "Displacement potency (?)"
@@ -51,13 +52,12 @@ ZOOM_WINDOW = [ZOOM_MIN, ZOOM_MAX]
 
 
 ###------ Set up ------###
-# Random seed
-np.random.seed(SEED)
-torch.manual_seed(SEED)
-torch.backends.cudnn.deterministic = True
+# Set random seed
+gfn.set_seed(SEED)
 
 # Set torch device
 device = gfn.set_torch_device()
+
 
 ###------ Load and pre-process data ------###
 # Load dataset and convert to dataframe
@@ -75,18 +75,17 @@ data_dict, scaler_X, scaler_y = gfn.normalise_dataset(X_train, y_train, X_test, 
 
 
 ###------ Train LSTM ------###
-model = lstm.MultiStepLSTM(N_VARIATES, HIDDEN_SIZE, N_LAYERS, OUTPUT_SIZE, device).to(device)
-results_dict = lstm.train_lstm(model, N_EPOCHS, data_dict, scaler_y)
+model = lstm.MultiStepLstmSingleLayer(N_VARIATES, HIDDEN_SIZE, N_LAYERS, OUTPUT_SIZE, device).to(device)
+results_dict = lstm.train_lstm(model, N_EPOCHS, data_dict, scaler_y, device)
 
 
 ###------ Plot Results ------###
-# Plot predictions against true values
-TEST_START_IDX = len(df_smoothed) - len(y_test) - LOOKBACK
-lstm.plot_all_data(TEST_START_IDX, data_dict, results_dict, LOOKBACK, FORECAST, TITLE, X_LABEL, Y_LABEL, [])
-lstm.plot_all_data(TEST_START_IDX, data_dict, results_dict, LOOKBACK, FORECAST, TITLE, X_LABEL, Y_LABEL, ZOOM_WINDOW)
+if PLOTTING:
+    # Plot predictions against true values
+    TEST_START_IDX = len(df_smoothed) - len(y_test)
+    gfn.plot_all_data(TEST_START_IDX, data_dict, results_dict, LOOKBACK, FORECAST, TITLE, X_LABEL, Y_LABEL, [])
+    gfn.plot_all_data(TEST_START_IDX, data_dict, results_dict, LOOKBACK, FORECAST, TITLE, X_LABEL, Y_LABEL, ZOOM_WINDOW)
 
-# Plot RMSE and R2
-lstm.plot_metric(N_EPOCHS, results_dict["train_rmse_list"], results_dict["test_rmse_list"], "RMSE")
-lstm.plot_metric(N_EPOCHS, results_dict["train_r2_list"], results_dict["test_r2_list"], "R$^2$")
-
-
+    # Plot RMSE and R2
+    gfn.plot_metric(N_EPOCHS, results_dict["train_rmse_list"], results_dict["test_rmse_list"], "RMSE")
+    gfn.plot_metric(N_EPOCHS, results_dict["train_r2_list"], results_dict["test_r2_list"], "R$^2$")

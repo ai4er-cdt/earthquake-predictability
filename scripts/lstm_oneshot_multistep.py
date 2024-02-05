@@ -2,7 +2,7 @@
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+
 import torch
 import tqdm
 import torch.nn as nn
@@ -11,22 +11,40 @@ import torch.utils.data as data
 from sklearn.metrics import r2_score
 
 
-# Import local modules
-from notebooks import local_paths
-from utils.dataset import SlowEarthquakeDataset
-import general_functions as gfn
-
-MAIN_DICT = local_paths.MAIN_DIRECTORY
-sys.path.append(local_paths.MAIN_DIRECTORY)
+class MultiStepLstmSingleLayer(nn.Module):
+    """
+    A PyTorch neural network model using an LSTM for multi-step time series forecasting.
 
 
-class MultiStepLSTM(nn.Module):
-    """Subclass of nn.Module"""
+    Attributes:
+        n_variates (int): Number of input variables (features).
+        hidden_size (int): Number of features in the hidden state of the LSTM.
+        n_layers (int): Number of recurrent layers in the LSTM.
+        output_size (int): Number of features in the output/forecasted values.
+        device (str): Device on which the model is being run (e.g., 'cuda' or 'cpu').
 
-    def __init__(
-        self, n_variates, hidden_size, n_layers, output_size, device
-    ):
+    Methods:
+        forward(x):
+            Performs a forward pass through the LSTM layer.
+
+    Example:
+        model = MultiStepLSTM(n_variates=5, hidden_size=64, n_layers=2, output_size=1, device='cuda')
+    """
+
+    def __init__(self, n_variates, hidden_size, n_layers, output_size, device):
+        """
+        Initializes the MultiStepLSTM model.
+
+        Parameters:
+            - n_variates (int): Number of input variables (features).
+            - hidden_size (int): Number of features in the hidden state of the LSTM.
+            - n_layers (int): Number of recurrent layers in the LSTM.
+            - output_size (int): Number of features in the output/forecasted values.
+            - device (str): Device on which the model is being run (e.g., 'cuda' or 'cpu').
+        """
         super().__init__()
+
+        # Set model attributes
         self.n_variates = n_variates
         self.hidden_size = hidden_size
         self.n_layers = n_layers
@@ -45,8 +63,16 @@ class MultiStepLSTM(nn.Module):
         self.linear = nn.Linear(self.hidden_size, self.output_size)
 
     def forward(self, x):
-        """Forward pass through the LSTM layer."""
-        # Initialise hidden state and cell state
+        """
+        Performs a forward pass through the LSTM layer.
+
+        Parameters:
+            - x (torch.Tensor): Input data tensor with shape (batch_size, seq_length, n_variates).
+
+        Returns:
+            - torch.Tensor: Output tensor with shape (batch_size, output_size).
+        """
+        # Initialize hidden state and cell state
         h0 = torch.zeros(self.n_layers, x.size(0), self.hidden_size).to(self.device)
         c0 = torch.zeros(self.n_layers, x.size(0), self.hidden_size).to(self.device)
 
@@ -62,7 +88,85 @@ class MultiStepLSTM(nn.Module):
         return output
     
 
-def train_lstm(model, N_EPOCHS, data_dict, scaler_y):
+
+class MultiStepLstmMultiLayer(nn.Module):
+    def __init__(self, n_variates, hidden_size, n_layers, output_size, device):
+        """
+        Initializes the MultiStepLSTM model.
+
+        Parameters:
+            - n_variates (int): Number of input variables (features).
+            - hidden_size (int): Number of features in the hidden state of the LSTM.
+            - n_layers (int): Number of recurrent layers in the LSTM.
+            - output_size (int): Number of features in the output/forecasted values.
+            - device (str): Device on which the model is being run (e.g., 'cuda' or 'cpu').
+        """
+        super().__init__()
+        # Set model attributes
+        self.n_variates = n_variates
+        self.hidden_size = hidden_size
+        self.n_layers = n_layers
+        self.output_size = output_size
+        self.device = device
+
+        # LSTM layer with specified input size, hidden size, and batch_first
+        self.lstm = nn.LSTM(
+            input_size=self.n_variates,
+            hidden_size=self.hidden_size,
+            num_layers=self.n_layers,
+            batch_first=True,
+        )
+
+        self.fc1 = nn.Linear(n_layers * hidden_size, 128)
+        self.fc2 = nn.Linear(128, output_size)
+        self.relu = nn.ReLU6()
+
+    def forward(self, x):
+        """
+        Performs a forward pass through the LSTM layer.
+
+        Parameters:
+            - x (torch.Tensor): Input data tensor with shape (batch_size, seq_length, n_variates).
+
+        Returns:
+            - torch.Tensor: Output tensor with shape (batch_size, output_size).
+        """
+        h0 = torch.zeros(self.n_layers, x.size(0), self.hidden_size).to(
+            x.device
+        )
+        c0 = torch.zeros(self.n_layers, x.size(0), self.hidden_size).to(
+            x.device
+        )
+
+        _, (hn, cn) = self.lstm(x, (h0, c0))
+        hn = hn.view(x.size(0), self.n_layers * self.hidden_size)
+        out = self.relu(hn)
+        out = self.fc1(out)
+        out = self.relu(out)
+        out = self.fc2(out)
+        return out
+
+
+def train_lstm(model, N_EPOCHS, data_dict, scaler_y, device):
+    """
+    Train an LSTM model for time series forecasting.
+
+    Parameters:
+        - model (nn.Module): LSTM model to be trained.
+        - N_EPOCHS (int): Number of training epochs.
+        - data_dict (dict): Dictionary containing training and testing data arrays.
+        - scaler_y: Scaler for the target variable.
+
+    Returns:
+        - dict: Dictionary containing the training and testing predictions,
+              as well as lists of training and testing RMSE and R2 values.
+    """
+
+    # Move training and testing data to the specified device (cuda or cpu)
+    X_train_sc = data_dict["X_train_sc"].to(device)
+    y_train_sc = data_dict["y_train_sc"].to(device)
+    X_test_sc = data_dict["X_test_sc"].to(device)
+    y_test_sc = data_dict["y_test_sc"].to(device)
 
     # Define Adam optimizer and Mean Squared Error (MSE) loss function
     optimizer = optim.Adam(model.parameters())
@@ -70,7 +174,7 @@ def train_lstm(model, N_EPOCHS, data_dict, scaler_y):
 
     # Create a DataLoader for training batches
     loader = data.DataLoader(
-        data.TensorDataset(data_dict["X_train_sc"], data_dict["y_train_sc"]), shuffle=True, batch_size=32
+        data.TensorDataset(X_train_sc, y_train_sc), shuffle=True, batch_size=32
     )
 
     # Lists to store RMSE values for plotting
@@ -81,7 +185,7 @@ def train_lstm(model, N_EPOCHS, data_dict, scaler_y):
     pbar = tqdm.tqdm(range(N_EPOCHS))
 
     # Training loop
-    for epoch in tqdm.tqdm(range(N_EPOCHS)):
+    for epoch in pbar:
         model.train()
 
         # Iterate through batches in the DataLoader
@@ -99,7 +203,7 @@ def train_lstm(model, N_EPOCHS, data_dict, scaler_y):
 
         with torch.no_grad():  # do not consider gradient in evaluating - no backprop
             # Evaluate model on training data
-            y_train_pred = model(data_dict["X_train_sc"].unsqueeze(-1))
+            y_train_pred = model(X_train_sc.unsqueeze(-1))
             y_train_pred = torch.Tensor(
                 scaler_y.inverse_transform(y_train_pred.cpu())
             )
@@ -109,7 +213,7 @@ def train_lstm(model, N_EPOCHS, data_dict, scaler_y):
             train_r2_list.append(train_r2.item())
 
             # Evaluate model on testing data
-            y_test_pred = model(data_dict["X_test_sc"].unsqueeze(-1))
+            y_test_pred = model(X_test_sc.unsqueeze(-1))
             y_test_pred = torch.Tensor(
                 scaler_y.inverse_transform(y_test_pred.cpu())
             )
@@ -130,63 +234,7 @@ def train_lstm(model, N_EPOCHS, data_dict, scaler_y):
         "test_rmse_list": test_rmse_list,
         "train_r2_list": train_r2_list,
         "test_r2_list": test_r2_list
-
     }
 
     return results_dict
 
-def plot_all_data(test_start_index, data_dict, results_dict, lookback, forecast, title, x_label, y_label, zoom_window):
-    train_outputs = results_dict["y_train_pred"]
-    test_outputs = results_dict["y_test_pred"]
-
-    train_plot = np.array(
-        [train_outputs[idx] for idx in range(0, len(train_outputs), forecast)]
-    ).reshape(-1, 1)
-
-    test_plot = np.array(
-        [test_outputs[idx] for idx in range(0, len(test_outputs), forecast)]
-    ).reshape(-1, 1)
-
-    combined_plot = np.concatenate((train_plot, test_plot))
-
-    plt.figure(figsize=(25, 6))
-    plt.plot(
-        range(lookback, lookback + len(combined_plot)),
-        np.concatenate((data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])),
-        label="True values",
-    )
-
-    plt.plot(
-        range(lookback, lookback + len(train_plot)),
-        train_plot,
-        label="Training prediction",
-    )
-    plt.plot(
-        range(lookback + len(train_plot), lookback + len(combined_plot)),
-        test_plot,
-        label="Testing prediction",
-    )
-
-    plt.axvline(
-        x=test_start_index, color="gray", linestyle="--", label="Test set start"
-    )
-
-    if len(zoom_window)>0:
-        plt.xlim(zoom_window[0], zoom_window[1])
-
-    plt.title(title)
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.legend()
-    plt.show()
-
-def plot_metric(n_epochs, train_metric_list, test_metric_list, metric_label):
-    # Plot metric over epochs
-    plt.figure(figsize=(10, 6))
-    plt.plot(range(0, n_epochs), train_metric_list, label=f"Train {metric_label}")
-    plt.plot(range(0, n_epochs), test_metric_list, label=f"Test {metric_label}")
-    plt.xlabel("Epochs")
-    plt.ylabel(f"{metric_label}")
-    plt.title(f"{metric_label} over Epochs")
-    plt.legend()
-    plt.show()
