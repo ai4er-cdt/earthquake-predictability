@@ -12,9 +12,10 @@ dependencies:
   - numpy
   - pre_commit
   - python=3.11.5
+  - pytorch
   - scikit-learn
   - seaborn
+  - torchvision
   - tqdm
   - xarray
-  - pytorch
-  - torchvision
+  - gluonts

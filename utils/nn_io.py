@@ -4,13 +4,15 @@ import pickle
 import sys
 from datetime import datetime
 from pathlib import Path
+from notebooks import local_paths
 
 import torch
 from gluonts.model.predictor import Predictor
 
+# MAIN_DICT = local_paths.MAIN_DIRECTORY # Activate when local_paths works and has been changed for your device
 MAIN_DICT = "/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability"
-RESULTS_DIRECTORY = f"{MAIN_DICT}/results"
 
+RESULTS_DIRECTORY = f"{MAIN_DICT}/results"
 sys.path.append(MAIN_DICT)
 
 
