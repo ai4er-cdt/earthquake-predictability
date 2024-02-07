@@ -4,12 +4,11 @@ from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 import pandas as pd
 
-from notebooks import local_paths
 from utils.load import load_data
 from utils.params import set_param
+from utils.paths import MAIN_DIRECTORY, REL_DATA_DIR
 
-MAIN_DICT = local_paths.MAIN_DIRECTORY # Activate when local_paths works and has been changed for your device
-# MAIN_DICT = "/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability"
+MAIN_DICT = MAIN_DIRECTORY
 sys.path.append(MAIN_DICT)
 
 EXPERIMENTS = [
@@ -71,7 +70,9 @@ class SlowEarthquakeDataset:
             if "_seg" in exp:
                 params["segment"] = int(exp.split("_")[1])
             dirs = {"main": MAIN_DICT}
-            dirs["data"] = dirs["main"] + local_paths.REL_DATA_DIR + params["dir_data"]
+            dirs["data"] = (
+                dirs["main"] + "/" + REL_DATA_DIR + "/" + params["dir_data"]
+            )
             X, Y, t, dt, vl = load_data(exp, dirs, params)
             dataset = {
                 "X": X,
@@ -129,17 +130,18 @@ class SlowEarthquakeDataset:
 
     def convert_to_df(self, experiment):
         ds_exp = self.__getitem__(experiment)
-        
+
         X, Y, t = ds_exp["X"], ds_exp["Y"], ds_exp["t"]
 
         df = pd.DataFrame(
             np.hstack((X, Y, t.reshape(-1, 1))),
-            columns=[ds_exp["hdrs"]["X"], *ds_exp["hdrs"]["Y"], ds_exp["hdrs"]["t"]],
-            )
+            columns=[
+                ds_exp["hdrs"]["X"],
+                *ds_exp["hdrs"]["Y"],
+                ds_exp["hdrs"]["t"],
+            ],
+        )
 
         df = df.dropna(axis=1)
 
         return df
-
-
-
