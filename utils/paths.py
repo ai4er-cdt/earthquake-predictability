@@ -1,3 +1,5 @@
+# credit: Camilla Billari (cgb47@cam.ac.uk)
+
 import getpass
 import os
 import socket
@@ -30,13 +32,13 @@ if "ac.uk" in hostname:
         f"/gws/nopw/j04/ai4er/users/{jasmin_user}/earthquake-predictability"
     )
     # specify the relative path to the data directory within the main directory
-    REL_DATA_DIR = "/data"
+    REL_DATA_DIR = "data"
 else:
+    # specify the relative path to the local data directory
+    REL_DATA_DIR = "data_local"
     if "camilla" in username:
         # define the main directory on Camilla's local machine for earthquake predictability research
         MAIN_DIRECTORY = "/Users/camillagiuliabillari/Desktop/github-repositories/cambridge/earthquake-predictability"
-        # specify the relative path to the local data directory
-        REL_DATA_DIR = "data_local"
 
 GTC_DATA_DIR = f"{MAIN_DIRECTORY}/{REL_DATA_DIR}/gtc_quakes_data"
 
