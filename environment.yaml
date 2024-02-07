@@ -22,3 +22,4 @@ dependencies:
   - pytorch-cuda=12.1
   - torchaudio
   - gluonts
+  - bokeh
