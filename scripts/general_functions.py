@@ -15,10 +15,11 @@ def set_seed(seed):
     Set the random seed for reproducibility in NumPy and PyTorch.
 
     Parameters:
-        - seed (int): The desired random seed.
+        seed (int): The desired random seed.
     """
     np.random.seed(seed)  # Set NumPy random seed
     torch.manual_seed(seed)  # Set PyTorch random seed
+    torch.cuda.manual_seed(42)
     torch.backends.cudnn.deterministic = True  # Ensure deterministic behavior when using CUDA
 
 
@@ -27,7 +28,7 @@ def set_torch_device():
     Set the PyTorch device based on the availability of CUDA (NVIDIA GPU acceleration).
 
     Returns:
-        - torch.device: The PyTorch device (cuda or cpu).
+        torch.device: The PyTorch device (cuda or cpu).
     """
     # Check if CUDA (NVIDIA GPU acceleration) is available
     if torch.cuda.is_available():
@@ -52,17 +53,18 @@ def set_torch_device():
 #       Functions for dataset pre-processing        #
 ### --------------------------------------------- ###
 
+
 def moving_average_causal_filter(df, smoothing_window, downsampling_factor):
     """
     Apply a causal moving average filter to a DataFrame.
 
     Parameters:
-        - df (pd.DataFrame): The input DataFrame.
-        - smoothing_window (float): The size of the smoothing window.
-        - downsampling_factor (float): The downsampling factor.
+        df (pd.DataFrame): The input DataFrame.
+        smoothing_window (float): The size of the smoothing window.
+        downsampling_factor (float): The downsampling factor.
 
     Returns:
-        - pd.DataFrame: The filtered and downsampled DataFrame.
+        pd.DataFrame: The filtered and downsampled DataFrame.
     """
     # Apply rolling mean with causal filtering and downsampling
     downsampled_df = (
@@ -81,13 +83,13 @@ def compare_feature_statistics(original_feature, downsampled_feature, significan
     Compare the mean and variance of two samples using t-test and F-test.
 
     Parameters:
-        - original_feature (pd.Series): The original feature for comparison.
-        - downsampled_feature (pd.Series): The downsampled feature for comparison.
-        - significance_level (float, optional): The significance level for hypothesis testing.
+        original_feature (pd.Series): The original feature for comparison.
+        downsampled_feature (pd.Series): The downsampled feature for comparison.
+        significance_level (float, optional): The significance level for hypothesis testing.
                                               Default is 0.05.
 
     Returns:
-        - dict: A dictionary containing the results of the mean and variance comparisons.
+        dict: A dictionary containing the results of the mean and variance comparisons.
     """
     # Perform two-sample t-test for mean comparison
     t_statistic_mean, p_value_mean = ttest_ind(original_feature, downsampled_feature)
@@ -112,17 +114,63 @@ def compare_feature_statistics(original_feature, downsampled_feature, significan
     return results
 
 
+def plot_original_vs_processed_data(original_df, processed_df, plot_type, processing_label="Smoothed"):
+    """
+    Plots relevant features in the original and processed datasets.
+
+    Parameters:
+        original_df (DataFrame): Original dataset to be plotted.
+        processed_df (DataFrame): Processed dataset to be plotted.
+        processing_label (str): Label describing the processing applied to the data.
+        plot_type (str): Type of plot. Options: "scatter" or "line".
+    """
+    
+    # Create a figure to hold the plots
+    plt.figure(figsize=(12, 6))
+
+    # Plot scatter plots
+    if plot_type == "scatter":
+        # Plot original data
+        plt.subplot(1, 2, 1)
+        plt.scatter(range(len(original_df)), original_df, label="Original Data", s=10)
+        plt.title("Original Data")
+
+        # Plot processed data
+        plt.subplot(1, 2, 2)
+        plt.scatter(range(len(processed_df)), processed_df, label="Processed Data", s=10)
+        plt.title(f"{processing_label} Data")
+
+    # Plot line plots
+    elif plot_type == "line":
+        # Plot original data
+        plt.subplot(1, 2, 1)
+        plt.plot(range(len(original_df)), original_df, label="Original Data")
+        plt.title("Original Data")
+
+        # Plot processed data
+        plt.subplot(1, 2, 2)
+        plt.plot(range(len(processed_df)), processed_df, label="Processed Data")
+        plt.title(f"{processing_label} Data")
+
+    else:
+        # Handle unsupported plot types
+        print("Unsupported plot type. Choose either 'scatter' or 'line'.")
+
+    # Display the plot
+    plt.show()
+
+
 def create_dataset(dataset, lookback, forecast):
     """Transform a time series into a prediction dataset.
 
     Parameters:
-        - dataset (numpy.ndarray): Numpy array of time series (first dimension is the time steps).
-        - lookback (int): Size of the window for prediction.
-        - forecast (int): Number of time steps to predict into the future.
+        dataset (numpy.ndarray): Numpy array of time series (first dimension is the time steps).
+        lookback (int): Size of the window for prediction.
+        forecast (int): Number of time steps to predict into the future.
 
     Returns:
-        - torch.Tensor: Pytorch tensor of the X windowed features
-        - torch.Tensor: Pytorch tensor of the y windowed targets
+        torch.Tensor: Pytorch tensor of the X windowed features
+        torch.Tensor: Pytorch tensor of the y windowed targets
     """
     X, y = [], []
 
@@ -142,20 +190,43 @@ def create_dataset(dataset, lookback, forecast):
     return X_tensor, y_tensor
 
 
+def plot_example_sample(X, y, select_window, lookback, forecast):
+    """
+    Plots an example sample of X and y with the specified lookback and forecast.
+
+    Parameters:
+        X (array_like): Input data.
+        y (array_like): Target data.
+        select_window (int): Index of the sample to plot.
+        lookback (int): Length of the lookback period.
+        forecast (int): Length of the forecast period.
+    """
+    plt.figure(figsize=(15, 5))
+    # Plot the lookback data
+    plt.plot(X[select_window], ".", label="Lookback")
+    # Plot the forecast data shifted by the length of the lookback
+    plt.plot(np.arange(lookback, lookback + forecast), y[select_window], ".", label="Forecast")
+    plt.title(f"Lookback and forecast of the sample")
+    plt.xlabel("Time (days)")
+    plt.ylabel("Displacement potency (?)")
+    plt.legend()
+    plt.show()
+
+
 def split_train_test_forecast_windows(X, y, forecast, n_forecast_windows):
     """
     Split input features (X) and target values (y) into training and testing sets
     for time series forecasting.
 
     Parameters:
-        - X (torch.Tensor): Input features for time series forecasting.
-        - y (torch.Tensor): Target values for time series forecasting.
-        - forecast (int): Number of time steps to predict into the future.
-        - n_forecast_windows (int): Number of forecast windows to reserve for testing.
+        X (torch.Tensor): Input features for time series forecasting.
+        y (torch.Tensor): Target values for time series forecasting.
+        forecast (int): Number of time steps to predict into the future.
+        n_forecast_windows (int): Number of forecast windows to reserve for testing.
 
     Returns:
-        - tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor): A tuple containing
-        - X_train, y_train, X_test, y_test for training and testing the forecasting model.
+        tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor): A tuple containing
+        X_train, y_train, X_test, y_test for training and testing the forecasting model.
     """
     # Calculate the total size of the test set in terms of forecast windows
     test_size = n_forecast_windows * forecast
@@ -177,13 +248,13 @@ def normalise_dataset(X_train, y_train, X_test, y_test):
     Normalize the input and output datasets using Min-Max scaling.
     
     Parameters:
-        - X_train (numpy.ndarray): Training input data.
-        - y_train (numpy.ndarray): Training output data.
-        - X_test (numpy.ndarray): Test input data.
-        - y_test (numpy.ndarray): Test output data.
+        X_train (numpy.ndarray): Training input data.
+        y_train (numpy.ndarray): Training output data.
+        X_test (numpy.ndarray): Test input data.
+        y_test (numpy.ndarray): Test output data.
 
     Returns:
-        - tuple: A tuple containing a dictionary with various dataset arrays,
+        tuple: A tuple containing a dictionary with various dataset arrays,
                and MinMaxScaler instances for input and output data.
     """
 
@@ -226,20 +297,21 @@ def normalise_dataset(X_train, y_train, X_test, y_test):
 #       Functions for ploting model results         #
 ### --------------------------------------------- ###
 
-def plot_all_data(test_start_index, data_dict, results_dict, lookback, forecast, title, x_label, y_label, zoom_window):
+
+def plot_all_data_results(test_start_index, data_dict, results_dict, lookback, forecast, title, x_label, y_label, zoom_window):
     """
     Plot true values, training predictions, and testing predictions for time series data.
 
     Parameters:
-        - test_start_index (int): Index where the test set starts.
-        - data_dict (dict): Dictionary containing training and testing data arrays.
-        - results_dict (dict): Dictionary containing the training and testing predictions.
-        - lookback (int): Number of time steps to look back in the data.
-        - forecast (int): Number of time steps ahead to forecast.
-        - title (str): Plot title.
-        - x_label (str): Label for the x-axis.
-        - y_label (str): Label for the y-axis.
-        - zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
+        test_start_index (int): Index where the test set starts.
+        data_dict (dict): Dictionary containing training and testing data arrays.
+        results_dict (dict): Dictionary containing the training and testing predictions.
+        lookback (int): Number of time steps to look back in the data.
+        forecast (int): Number of time steps ahead to forecast.
+        title (str): Plot title.
+        x_label (str): Label for the x-axis.
+        y_label (str): Label for the y-axis.
+        zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
     """
     train_outputs = results_dict["y_train_pred"]
     test_outputs = results_dict["y_test_pred"]
@@ -291,7 +363,7 @@ def plot_all_data(test_start_index, data_dict, results_dict, lookback, forecast,
     plt.show()
 
 
-def plot_metric(n_epochs, train_metric_list, test_metric_list, metric_label):
+def plot_metric_results(n_epochs, train_metric_list, test_metric_list, metric_label):
     """
     Plot a metric over epochs for training and testing sets.
 
