@@ -40,7 +40,6 @@ def train_model(model, N_EPOCHS, data_dict, scaler_y, device):
 
     # Lists to store RMSE values for plotting
     train_rmse_list = []; test_rmse_list = []
-    train_mae_list = []; test_mae_list = []
     train_r2_list = []; test_r2_list = []
 
     # Progress bar length

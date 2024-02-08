@@ -96,6 +96,7 @@ def plot_all_data_results(test_start_index, data_dict, results_dict, lookback, f
         y_label (str): Label for the y-axis.
         zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
     """
+    
     train_outputs = results_dict["y_train_pred"]
     test_outputs = results_dict["y_test_pred"]
 
@@ -107,6 +108,8 @@ def plot_all_data_results(test_start_index, data_dict, results_dict, lookback, f
     test_plot = np.array(
         [test_outputs[idx] for idx in range(0, len(test_outputs), forecast)]
     ).reshape(-1, 1)
+
+    test_start_index = len(train_plot)
 
     combined_plot = np.concatenate((train_plot, test_plot))
 

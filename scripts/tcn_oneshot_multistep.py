@@ -3,9 +3,8 @@ import torch.nn as nn
 from torch.nn.utils import weight_norm
 
 
-
 class Chomp1d(nn.Module):
-    """Removes the trailing chomp_size from the input tensor."""
+    """ Removes the trailing chomp_size from the input tensor. """
     def __init__(self, chomp_size):
         super(Chomp1d, self).__init__()
         self.chomp_size = chomp_size
@@ -15,7 +14,7 @@ class Chomp1d(nn.Module):
 
 
 class TemporalBlock(nn.Module):
-    """Defines a single temporal block consisting of a convolutional layer, chomping, and activation."""
+    """ Defines a single temporal block consisting of a convolutional layer, chomping, and activation. """
     def __init__(self, n_inputs, n_outputs, kernel_size, stride, dilation, padding, dropout=0.2):
         super(TemporalBlock, self).__init__()
         # Weight normalized convolutional layer
@@ -35,7 +34,7 @@ class TemporalBlock(nn.Module):
 
 
 class TemporalConvNet(nn.Module):
-    """Defines the Temporal Convolutional Network architecture."""
+    """ Defines the Temporal Convolutional Network architecture. """
     def __init__(self, num_inputs, num_channels, kernel_size=2, dropout=0.2):
         super(TemporalConvNet, self).__init__()
         layers = []
@@ -56,7 +55,25 @@ class TemporalConvNet(nn.Module):
 
 
 class MultiStepTCN(nn.Module):
-    """Multi-step Temporal Convolutional Network model for forecasting."""
+    """
+    A PyTorch neural network model using an ulti-step Temporal Convolutional Network model for
+    forecasting.
+
+
+    Attributes:
+        n_variates (int): Number of input variables (features).
+        hidden_size (int): Number of features in the hidden state of the LSTM.
+        n_layers (int): Number of recurrent layers in the LSTM.
+        output_size (int): Number of features in the output/forecasted values.
+        device (str): Device on which the model is being run (e.g., 'cuda' or 'cpu').
+
+    Methods:
+        forward(x):
+            Performs a forward pass through the LSTM layer.
+
+    Example:
+        model = MultiStepTCN(N_VARIATES, N_CHANNELS, KERNEL_SIZE, OUTPUT_SIZE, device)
+    """
     def __init__(self, n_variates, num_channels, kernel_size, output_size, device):
         """
         Initializes the MultiStepTCN model.

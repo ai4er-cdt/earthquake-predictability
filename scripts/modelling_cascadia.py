@@ -9,10 +9,15 @@ import torch.nn as nn
 import os
 
 # Import local modules
-from utils import general_functions, data_preprocessing, plotting, nn_train
 from utils.dataset import SlowEarthquakeDataset
-import lstm_oneshot_multistep as lstm
-import tcn_oneshot_multistep as tcn
+from utils.general_functions import set_seed, set_torch_device
+from utils.data_preprocessing import moving_average_causal_filter, compare_feature_statistics, create_dataset, split_train_test_forecast_windows, normalise_dataset
+from utils.plotting import plot_original_vs_processed_data, plot_example_sample, plot_metric_results, plot_all_data_results
+from utils.nn_train import train_model
+from utils.nn_io import load_model, save_model
+from utils.eval import record_metrics
+from lstm_oneshot_multistep import MultiStepLstmMultiLayer
+from tcn_oneshot_multistep import MultiStepTCN
 
 ###------ Parameters Definition ------###
 # General
@@ -27,6 +32,8 @@ DOWNSAMPLING_FACTOR = 1
 LOOKBACK, FORECAST = 150, 14 # lookback and forecast values
 N_FORECAST_WINDOWS = 40 # n forecasted windows in test set
 
+# Choose model type
+RECORDING = False # Record results? Bool
 MODEL = "TCN" # or "LSTM"
 
 # For general model config
@@ -45,7 +52,7 @@ KERNEL_SIZE = 3
 N_EPOCHS = 75
 
 # For plotting results
-PLOTTING = True
+PLOTTING = True # Plot graphs? Bool
 TITLE = "Original Time Series and Model Predictions of Segment 1 sum"
 X_LABEL = "Time (days)"
 Y_LABEL = "Displacement potency (?)"
@@ -56,10 +63,10 @@ ZOOM_WINDOW = [ZOOM_MIN, ZOOM_MAX]
 
 ###------ Set up ------###
 # Set random seed
-general_functions.set_seed(SEED)
+set_seed(SEED)
 
 # Set torch device
-device = general_functions.set_torch_device()
+device = set_torch_device()
 
 
 ###------ Load and pre-process data ------###
@@ -69,32 +76,46 @@ df = SlowEarthquakeDataset.convert_to_df(dataset, EXP)
 df_seg_1 = df["seg_avg"]/1e8
 
 # Smooth and pre-process the data into windows
-df_smoothed = data_preprocessing.moving_average_causal_filter(df_seg_1, SMOOTHING_WINDOW, DOWNSAMPLING_FACTOR)
-X, y = data_preprocessing.create_dataset(df_smoothed, LOOKBACK, FORECAST)
+df_smoothed = moving_average_causal_filter(df_seg_1, SMOOTHING_WINDOW, DOWNSAMPLING_FACTOR)
+X, y = create_dataset(df_smoothed, LOOKBACK, FORECAST)
 
 # Split into train and test sets and normalise it
-X_train, y_train, X_test, y_test = data_preprocessing.split_train_test_forecast_windows(X, y, FORECAST, N_FORECAST_WINDOWS)
-data_dict, scaler_X, scaler_y = data_preprocessing.normalise_dataset(X_train, y_train, X_test, y_test)
+X_train, y_train, X_test, y_test = split_train_test_forecast_windows(X, y, FORECAST, N_FORECAST_WINDOWS)
+data_dict, scaler_X, scaler_y = normalise_dataset(X_train, y_train, X_test, y_test)
 
 
 ###------ Train LSTM ------###
 # Choose model
 if MODEL == "LSTM":
-    model = lstm.MultiStepLstmSingleLayer(N_VARIATES, HIDDEN_SIZE, N_LAYERS, OUTPUT_SIZE, device).to(device)
+    model = MultiStepLstmMultiLayer(N_VARIATES, HIDDEN_SIZE, N_LAYERS, OUTPUT_SIZE, device)
 elif MODEL == "TCN":
-    model = tcn.MultiStepTCN(N_VARIATES, N_CHANNELS, KERNEL_SIZE, OUTPUT_SIZE, device).to(device)
+    model = MultiStepTCN(N_VARIATES, N_CHANNELS, KERNEL_SIZE, OUTPUT_SIZE, device)
 
 # Train the modle
-results_dict = nn_train.train_model(model, N_EPOCHS, data_dict, scaler_y, device)
+results_dict = train_model(model, N_EPOCHS, data_dict, scaler_y, device)
+
+if RECORDING:
+    model_dir = save_model(
+        model,
+        df_smoothed.values[-len(y_test):],
+        results_dict,
+        range(0, len(y_test)),
+        model_name=f"{MODEL}_cascadia",
+        gluon_ts=True,
+    )
+
+    model, data = load_model(model, model_dir, gluon_ts=True)
+    
+    record_metrics(model, results_dict, model_dir)
 
 
 ###------ Plot Results ------###
 if PLOTTING:
     # Plot predictions against true values
     TEST_START_IDX = len(df_smoothed) - len(y_test)
-    plotting.plot_all_data_results(TEST_START_IDX, data_dict, results_dict, LOOKBACK, FORECAST, TITLE, X_LABEL, Y_LABEL, [])
-    plotting.plot_all_data_results(TEST_START_IDX, data_dict, results_dict, LOOKBACK, FORECAST, TITLE, X_LABEL, Y_LABEL, ZOOM_WINDOW)
+    plot_all_data_results(TEST_START_IDX, data_dict, results_dict, LOOKBACK, FORECAST, TITLE, X_LABEL, Y_LABEL, [])
+    plot_all_data_results(TEST_START_IDX, data_dict, results_dict, LOOKBACK, FORECAST, TITLE, X_LABEL, Y_LABEL, ZOOM_WINDOW)
 
     # Plot RMSE and R2
-    plotting.plot_metric_results(N_EPOCHS, results_dict["train_rmse_list"], results_dict["test_rmse_list"], "RMSE")
-    plotting.plot_metric_results(N_EPOCHS, results_dict["train_r2_list"], results_dict["test_r2_list"], "R$^2$")
+    plot_metric_results(N_EPOCHS, results_dict["train_rmse_list"], results_dict["test_rmse_list"], "RMSE")
+    plot_metric_results(N_EPOCHS, results_dict["train_r2_list"], results_dict["test_r2_list"], "R$^2$")
