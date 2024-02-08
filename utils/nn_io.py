@@ -17,16 +17,17 @@ sys.path.append(MAIN_DICT)
 
 def save_model(
     model,
-    input,
-    pred,
-    pred_index,
+    y_test,
+    y_pred,
+    y_pred_index,
     model_name=None,
     directory=RESULTS_DIRECTORY,
     gluon_ts=False,
 ):
     current_time = datetime.now().isoformat(timespec="seconds")
 
-    base_filename = model_name if model_name else getpass.getuser()
+    base_filename = getpass.getuser()
+    base_filename += "_" + model_name if model_name else None
     base_filename += "_" + current_time
 
     if gluon_ts:
@@ -42,9 +43,9 @@ def save_model(
         torch.save(model.state_dict(), model_path)
 
     data = {
-        "input": input,
-        "pred": pred,
-        "pred_index": pred_index,
+        "y_test": y_test,
+        "y_pred": y_pred,
+        "y_pred_index": y_pred_index,
     }
 
     with open(data_path, "wb") as f:
