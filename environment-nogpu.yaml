@@ -20,3 +20,4 @@ dependencies:
   - xarray
   - gluonts
   - bokeh
+  - conda-build

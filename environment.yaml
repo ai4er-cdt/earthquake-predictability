@@ -21,5 +21,6 @@ dependencies:
   - torchvision
   - pytorch-cuda=12.1
   - torchaudio
-  - gluonts
   - bokeh
+  - gluonts
+  - conda-build
