@@ -23,6 +23,7 @@ def save_model(
     model_name=None,
     directory=RESULTS_DIRECTORY,
     gluon_ts=False,
+    uncertainty=None,
 ):
     current_time = datetime.now().isoformat(timespec="seconds")
 
@@ -46,6 +47,7 @@ def save_model(
         "y_test": y_test,
         "y_pred": y_pred,
         "y_pred_index": y_pred_index,
+        "uncertainty": uncertainty,
     }
 
     with open(data_path, "wb") as f:

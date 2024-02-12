@@ -12,7 +12,6 @@ hostname = socket.gethostname()
 # retrieve the current user's login name
 username = getpass.getuser()
 
-print(hostname)
 # check if the hostname indicates the system is part of the ac.uk domain
 # else check if the username is present to set up a local development environment
 if "ac.uk" in hostname:

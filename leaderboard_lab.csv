@@ -1,0 +1,4 @@
+user,r2,mae,rmse,exp_type,model_dir
+p341cam,0.9463892132691124,0.0083782570436596,0.0159366261214017,lab,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_tcn_2024-02-12T00:47:16_torch
+p341cam,0.9403539347575882,0.008252464,0.016809748,lab,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_lstm_2024-02-12T00:46:01_torch
+p341cam,0.8894515777231534,0.004552119590705872,0.022884769833984662,lab,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_tft_2024-02-12T00:51:58_gluonts
