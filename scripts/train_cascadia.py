@@ -218,4 +218,4 @@ if args.plot:
         "R$^2$",
     )
 
-    print(f"plots saved in {PLOTS_DIRECTORY}")
+    print(f"Plots saved in {PLOTS_DIRECTORY}")
