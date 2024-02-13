@@ -1,2 +1,3 @@
 user,r2,mae,rmse,exp_type,model_dir
+p341cam,0.8687617631250683,0.17947165668010712,0.2609565556049347,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T22:41:02_torch
 p341cam,0.6556300841717727,0.3142239,0.42228106,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T03:52:15_torch

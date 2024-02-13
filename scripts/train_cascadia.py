@@ -1,7 +1,6 @@
 # Import relevant libraries and local modules
 
 from dataclasses import dataclass
-from typing import List
 
 import tyro
 from models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
@@ -23,6 +22,9 @@ from utils.plotting import (
     plot_all_data_results,
     plot_metric_results,
 )
+
+# from typing import List
+
 
 ### ------ Parameters Definition ------ ###
 
@@ -69,12 +71,12 @@ class ExperimentConfig:
     """size of the hidden layers in the LSTM model."""
     n_layers: int = 1
     """number of layers in the LSTM model."""
-    n_channels: List[int] = (64, 64, 64, 64)
-    """number of channels for each convolutional layer in the TCN model."""
     kernel_size: int = 3
     """size of the kernel in the convolutional layers of the TCN model."""
     epochs: int = 50
     """number of epochs for training the model."""
+    dropout: int = 0
+    """fraction of neurons to drop in model"""
 
     # Plotting config options
 
@@ -143,10 +145,11 @@ if args.model == "LSTM":
 elif args.model == "TCN":
     model = MultiStepTCN(
         args.n_variates,
-        args.n_channels,
-        args.kernel_size,
+        args.lookback,
         args.output_size,
-        device,
+        [args.hidden_size],
+        args.kernel_size,
+        args.dropout,
     )
 
 # Train the model
