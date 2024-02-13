@@ -1,7 +1,6 @@
 import getpass
 import os
 import pickle
-import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -12,7 +11,6 @@ from utils.paths import MAIN_DIRECTORY
 
 MAIN_DICT = MAIN_DIRECTORY
 RESULTS_DIRECTORY = f"{MAIN_DICT}/results"
-sys.path.append(MAIN_DICT)
 
 
 def save_model(

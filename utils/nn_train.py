@@ -1,19 +1,19 @@
-
 import numpy as np
-import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as data
+import tqdm
 from sklearn.metrics import r2_score
 
-def train_model(model, N_EPOCHS, data_dict, scaler_y, device):
+
+def train_model(model, n_epochs, data_dict, scaler_y, device):
     """
     Train a model for time series forecasting.
 
     Parameters:
         - model (nn.Module): model to be trained.
-        - N_EPOCHS (int): Number of training epochs.
+        - n_epochs (int): Number of training epochs.
         - data_dict (dict): Dictionary containing training and testing data arrays.
         - scaler_y: Scaler for the target variable.
 
@@ -22,12 +22,15 @@ def train_model(model, N_EPOCHS, data_dict, scaler_y, device):
               as well as lists of training and testing RMSE and R2 values.
     """
 
+    # Declare training device
+    print(f"training model on {device}")
+
     # Move model and training and testing data to the specified device (cuda or cpu)
     model = model.to(device)
     X_train_sc = data_dict["X_train_sc"].to(device)
     y_train_sc = data_dict["y_train_sc"].to(device)
     X_test_sc = data_dict["X_test_sc"].to(device)
-    y_test_sc = data_dict["y_test_sc"].to(device)
+    # y_test_sc = data_dict["y_test_sc"].to(device)
 
     # Define Adam optimizer and Mean Squared Error (MSE) loss function
     optimizer = optim.Adam(model.parameters())
@@ -39,11 +42,13 @@ def train_model(model, N_EPOCHS, data_dict, scaler_y, device):
     )
 
     # Lists to store RMSE values for plotting
-    train_rmse_list = []; test_rmse_list = []
-    train_r2_list = []; test_r2_list = []
+    train_rmse_list = []
+    test_rmse_list = []
+    train_r2_list = []
+    test_r2_list = []
 
     # Progress bar length
-    pbar = tqdm.tqdm(range(N_EPOCHS))
+    pbar = tqdm.tqdm(range(n_epochs))
 
     # Training loop
     for epoch in pbar:
@@ -72,7 +77,7 @@ def train_model(model, N_EPOCHS, data_dict, scaler_y, device):
             train_rmse_list.append(train_rmse.item())
             train_r2 = r2_score(data_dict["y_train"], y_train_pred)
             train_r2_list.append(train_r2.item())
-            
+
             # Evaluate model on testing data
             y_test_pred = model(X_test_sc.unsqueeze(-1))
             y_test_pred = torch.Tensor(
@@ -82,11 +87,10 @@ def train_model(model, N_EPOCHS, data_dict, scaler_y, device):
             test_rmse_list.append(test_rmse.item())
             test_r2 = r2_score(data_dict["y_test"], y_test_pred)
             test_r2_list.append(test_r2.item())
-            
 
         # Update progress bar with training and testing RMSE
         pbar.set_description(
-            f"Epoch [{epoch+1}/{N_EPOCHS}], RMSE Train: {train_rmse:.4f}, RMSE Test: {test_rmse:.4f}, MAE Train: {train_r2:.4f}, MAE Test: {test_r2:.4f},"
+            f"Epoch [{epoch+1}/{n_epochs}], RMSE Train: {train_rmse:.4f}, RMSE Test: {test_rmse:.4f}"
         )
 
     results_dict = {
@@ -95,8 +99,7 @@ def train_model(model, N_EPOCHS, data_dict, scaler_y, device):
         "train_rmse_list": train_rmse_list,
         "test_rmse_list": test_rmse_list,
         "train_r2_list": train_r2_list,
-        "test_r2_list": test_r2_list
-        
+        "test_r2_list": test_r2_list,
     }
 
     return results_dict

@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 
 
-class MultiStepLstmSingleLayer(nn.Module):
+class MultiStepLSTMSingleLayer(nn.Module):
     """
     A PyTorch neural network model using an LSTM for multi-step time series forecasting.
 
@@ -65,8 +65,12 @@ class MultiStepLstmSingleLayer(nn.Module):
             - torch.Tensor: Output tensor with shape (batch_size, output_size).
         """
         # Initialize hidden state and cell state
-        h0 = torch.zeros(self.n_layers, x.size(0), self.hidden_size).to(self.device)
-        c0 = torch.zeros(self.n_layers, x.size(0), self.hidden_size).to(self.device)
+        h0 = torch.zeros(self.n_layers, x.size(0), self.hidden_size).to(
+            self.device
+        )
+        c0 = torch.zeros(self.n_layers, x.size(0), self.hidden_size).to(
+            self.device
+        )
 
         # LSTM layer
         lstm_out, _ = self.lstm(x, (h0, c0))
@@ -78,10 +82,9 @@ class MultiStepLstmSingleLayer(nn.Module):
         output = self.linear(lstm_out)
 
         return output
-    
 
 
-class MultiStepLstmMultiLayer(nn.Module):
+class MultiStepLSTMMultiLayer(nn.Module):
     """
     A PyTorch neural network model using an LSTM for multi-step time series forecasting.
     Credit - Pritt's model!!!
@@ -101,9 +104,10 @@ class MultiStepLstmMultiLayer(nn.Module):
     Example:
         model = MultiStepLstmMultiLayer(N_VARIATES, HIDDEN_SIZE, N_LAYERS, OUTPUT_SIZE, device)
     """
+
     def __init__(self, n_variates, hidden_size, n_layers, output_size, device):
         """
-        Initializes the MultiStepLSTM model. 
+        Initializes the MultiStepLSTM model.
 
         Parameters:
             - n_variates (int): Number of input variables (features).

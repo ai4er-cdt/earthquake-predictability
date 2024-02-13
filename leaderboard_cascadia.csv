@@ -1,0 +1,4 @@
+user,r2,mae,rmse,exp_type,model_dir
+p341cam,0.6556300841717727,0.3142239,0.42228106,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T02:50:17_torch
+p341cam,0.6556300841717727,0.3142238855361938,0.4222810566425323,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T02:51:36_torch
+p341cam,0.6556300841717727,0.31422388553619385,0.42228105664253235,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T02:54:19_torch

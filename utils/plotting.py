@@ -1,13 +1,21 @@
 # Import relevant libraries
-import numpy as np
-import matplotlib.pyplot as plt
+from datetime import datetime
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+from utils.paths import MAIN_DIRECTORY, username
+
+PLOTS_DIRECTORY = f"{MAIN_DIRECTORY}/plots"
 
 ### --------------------------------------------- ###
 #         Functions for plotting dataset            #
 ### --------------------------------------------- ###
 
-def plot_original_vs_processed_data(original_df, processed_df, plot_type, processing_label="Smoothed"):
+
+def plot_original_vs_processed_data(
+    original_df, processed_df, plot_type, processing_label="Smoothed"
+):
     """
     Plots relevant features in the original and processed datasets.
 
@@ -16,8 +24,9 @@ def plot_original_vs_processed_data(original_df, processed_df, plot_type, proces
         processed_df (DataFrame): Processed dataset to be plotted.
         processing_label (str): Label describing the processing applied to the data.
         plot_type (str): Type of plot. Options: "scatter" or "line".
+        headless (bool): save inside plots folder.
     """
-    
+
     # Create a figure to hold the plots
     plt.figure(figsize=(12, 6))
 
@@ -25,12 +34,19 @@ def plot_original_vs_processed_data(original_df, processed_df, plot_type, proces
     if plot_type == "scatter":
         # Plot original data
         plt.subplot(1, 2, 1)
-        plt.scatter(range(len(original_df)), original_df, label="Original Data", s=10)
+        plt.scatter(
+            range(len(original_df)), original_df, label="Original Data", s=10
+        )
         plt.title("Original Data")
 
         # Plot processed data
         plt.subplot(1, 2, 2)
-        plt.scatter(range(len(processed_df)), processed_df, label="Processed Data", s=10)
+        plt.scatter(
+            range(len(processed_df)),
+            processed_df,
+            label="Processed Data",
+            s=10,
+        )
         plt.title(f"{processing_label} Data")
 
     # Plot line plots
@@ -42,7 +58,9 @@ def plot_original_vs_processed_data(original_df, processed_df, plot_type, proces
 
         # Plot processed data
         plt.subplot(1, 2, 2)
-        plt.plot(range(len(processed_df)), processed_df, label="Processed Data")
+        plt.plot(
+            range(len(processed_df)), processed_df, label="Processed Data"
+        )
         plt.title(f"{processing_label} Data")
 
     else:
@@ -51,6 +69,13 @@ def plot_original_vs_processed_data(original_df, processed_df, plot_type, proces
 
     # Display the plot
     plt.show()
+
+    # Save the plot
+    current_time = datetime.now().isoformat(timespec="seconds")
+    plt.savefig(
+        f"{PLOTS_DIRECTORY}/{username}_{current_time}_og_vs_proc.png",
+        bbox_inches="tight",
+    )
 
 
 def plot_example_sample(X, y, select_window, lookback, forecast):
@@ -68,20 +93,44 @@ def plot_example_sample(X, y, select_window, lookback, forecast):
     # Plot the lookback data
     plt.plot(X[select_window], ".", label="Lookback")
     # Plot the forecast data shifted by the length of the lookback
-    plt.plot(np.arange(lookback, lookback + forecast), y[select_window], ".", label="Forecast")
-    plt.title(f"Lookback and forecast of the sample")
+    plt.plot(
+        np.arange(lookback, lookback + forecast),
+        y[select_window],
+        ".",
+        label="Forecast",
+    )
+    plt.title("Lookback and forecast of the sample")
     plt.xlabel("Time (days)")
     plt.ylabel("Displacement potency (?)")
     plt.legend()
+
+    # Display the plot
     plt.show()
 
+    # Save the plot
+    current_time = datetime.now().isoformat(timespec="seconds")
+    plt.savefig(
+        f"{PLOTS_DIRECTORY}/{username}_{current_time}_eg_sample.png",
+        bbox_inches="tight",
+    )
 
 
 ### --------------------------------------------- ###
 #        Functions for plotting model results       #
 ### --------------------------------------------- ###
 
-def plot_all_data_results(test_start_index, data_dict, results_dict, lookback, forecast, title, x_label, y_label, zoom_window):
+
+def plot_all_data_results(
+    test_start_index,
+    data_dict,
+    results_dict,
+    lookback,
+    forecast,
+    title,
+    x_label,
+    y_label,
+    zoom_window,
+):
     """
     Plot true values, training predictions, and testing predictions for time series data.
 
@@ -96,7 +145,7 @@ def plot_all_data_results(test_start_index, data_dict, results_dict, lookback, f
         y_label (str): Label for the y-axis.
         zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
     """
-    
+
     train_outputs = results_dict["y_train_pred"]
     test_outputs = results_dict["y_test_pred"]
 
@@ -117,7 +166,9 @@ def plot_all_data_results(test_start_index, data_dict, results_dict, lookback, f
     plt.figure(figsize=(25, 6))
     plt.plot(
         range(lookback, lookback + len(combined_plot)),
-        np.concatenate((data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])),
+        np.concatenate(
+            (data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])
+        ),
         label="True values",
     )
 
@@ -134,7 +185,10 @@ def plot_all_data_results(test_start_index, data_dict, results_dict, lookback, f
 
     # Vertical line indicating the start of the test set
     plt.axvline(
-        x=test_start_index, color="gray", linestyle="--", label="Test set start"
+        x=test_start_index,
+        color="gray",
+        linestyle="--",
+        label="Test set start",
     )
 
     # Zoom into the specified window if provided
@@ -146,10 +200,21 @@ def plot_all_data_results(test_start_index, data_dict, results_dict, lookback, f
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.legend()
+
+    # Display the plot
     plt.show()
 
+    # Save the plot
+    current_time = datetime.now().isoformat(timespec="seconds")
+    plt.savefig(
+        f"{PLOTS_DIRECTORY}/{username}_{current_time}_all_data.png",
+        bbox_inches="tight",
+    )
 
-def plot_metric_results(n_epochs, train_metric_list, test_metric_list, metric_label):
+
+def plot_metric_results(
+    n_epochs, train_metric_list, test_metric_list, metric_label
+):
     """
     Plot a metric over epochs for training and testing sets.
 
@@ -161,12 +226,25 @@ def plot_metric_results(n_epochs, train_metric_list, test_metric_list, metric_la
     """
     # Plot metric over epochs
     plt.figure(figsize=(10, 6))
-    plt.plot(range(0, n_epochs), train_metric_list, label=f"Train {metric_label}")
-    plt.plot(range(0, n_epochs), test_metric_list, label=f"Test {metric_label}")
-    
+    plt.plot(
+        range(0, n_epochs), train_metric_list, label=f"Train {metric_label}"
+    )
+    plt.plot(
+        range(0, n_epochs), test_metric_list, label=f"Test {metric_label}"
+    )
+
     # Set plot labels, title, and legend
     plt.xlabel("Epochs")
     plt.ylabel(f"{metric_label}")
     plt.title(f"{metric_label} over Epochs")
     plt.legend()
+
+    # Display the plot
     plt.show()
+
+    # Save the plot
+    current_time = datetime.now().isoformat(timespec="seconds")
+    plt.savefig(
+        f"{PLOTS_DIRECTORY}/{username}_{current_time}_metrics.png",
+        bbox_inches="tight",
+    )

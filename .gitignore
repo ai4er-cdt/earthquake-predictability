@@ -180,3 +180,5 @@ cython_debug/
 notebooks/LSTM_bestmodel.pt
 data_local/
 notebooks/local_paths.py
+
+*.png
