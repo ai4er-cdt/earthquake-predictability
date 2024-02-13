@@ -1,6 +1,8 @@
 name: gtc_env
 channels:
-  - defaults
+  - conda-forge
+  - pytorch
+  - nvidia
 dependencies:
   - anaconda
   - git
@@ -24,3 +26,5 @@ dependencies:
   - bokeh
   - gluonts
   - conda-build
+- pip:  #FIXME: this is untested
+  - tyro
