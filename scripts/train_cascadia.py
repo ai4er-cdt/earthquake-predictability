@@ -16,7 +16,7 @@ from utils.data_preprocessing import (
 from utils.dataset import SlowEarthquakeDataset
 from utils.eval import record_metrics
 from utils.general_functions import set_seed, set_torch_device
-from utils.nn_io import load_model, save_model
+from utils.nn_io import save_model
 from utils.nn_train import train_model
 from utils.plotting import (
     PLOTS_DIRECTORY,
@@ -73,7 +73,7 @@ class ExperimentConfig:
     """number of channels for each convolutional layer in the TCN model."""
     kernel_size: int = 3
     """size of the kernel in the convolutional layers of the TCN model."""
-    epochs: int = 2
+    epochs: int = 50
     """number of epochs for training the model."""
 
     # Plotting config options
@@ -160,9 +160,9 @@ if args.record:
         results_dict,
         range(0, len(y_test)),
         model_name=f"{args.model}_cascadia",
+        model_params=args,
     )
 
-    model, data = load_model(model, model_dir)
     record_metrics(
         model,
         {"y_test": y_test, "y_pred": results_dict["y_test_pred"]},

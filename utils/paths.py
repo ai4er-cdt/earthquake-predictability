@@ -27,7 +27,7 @@ if "ac.uk" in hostname:
     ]
     # assume the first writable directory belongs to the JASMIN user running the script
     jasmin_user = writable_directories[0]
-    # define the main directory path for earthquake predictability research data
+    # define the main directory path for earthquake predictability
     MAIN_DIRECTORY = (
         f"/gws/nopw/j04/ai4er/users/{jasmin_user}/earthquake-predictability"
     )
@@ -37,7 +37,7 @@ else:
     # specify the relative path to the local data directory
     REL_DATA_DIR = "data_local"
     if "camilla" in username:
-        # define the main directory on Camilla's local machine for earthquake predictability research
+        # define the main directory on Camilla's local machine for earthquake predictability
         MAIN_DIRECTORY = "/Users/camillagiuliabillari/Desktop/github-repositories/cambridge/earthquake-predictability"
 
 GTC_DATA_DIR = f"{MAIN_DIRECTORY}/{REL_DATA_DIR}/gtc_quakes_data"

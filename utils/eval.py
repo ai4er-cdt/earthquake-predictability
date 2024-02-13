@@ -13,6 +13,7 @@ def record_metrics(model, data, exp_type, model_dir):
     Args:
     - model: The trained model.
     - data: A dictionary containing test data and predictions.
+    - exp_type: Type of experiment (lab, synthetic and cascadia).
     - model_dir: The directory where the model is saved.
 
     Returns:

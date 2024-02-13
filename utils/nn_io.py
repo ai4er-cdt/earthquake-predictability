@@ -22,6 +22,7 @@ def save_model(
     directory=RESULTS_DIRECTORY,
     gluon_ts=False,
     uncertainty=None,
+    model_params=None,
 ):
     current_time = datetime.now().isoformat(timespec="seconds")
 
@@ -32,14 +33,15 @@ def save_model(
     if gluon_ts:
         model_dir = os.path.join(directory, base_filename + "_gluonts")
         os.makedirs(model_dir)
-        data_path = model_dir + "/data.pkl"
         model.serialize(Path(model_dir))
     else:
         model_dir = os.path.join(directory, base_filename + "_torch")
         os.makedirs(model_dir)
         model_path = model_dir + "/model.pt"
-        data_path = model_dir + "/data.pkl"
         torch.save(model.state_dict(), model_path)
+
+    data_path = model_dir + "/data.pkl"
+    params_path = model_dir + "/params.pkl"
 
     data = {
         "y_test": y_test,
@@ -51,7 +53,11 @@ def save_model(
     with open(data_path, "wb") as f:
         pickle.dump(data, f)
 
-    print(f"model and data saved to {model_dir}")
+    if model_params:
+        with open(params_path, "wb") as f:
+            pickle.dump(model_params, f)
+
+    print(f"model and data [+ params] saved to {model_dir}")
     return model_dir
 
 
@@ -61,6 +67,7 @@ def load_model(model, model_dir, gluon_ts=False):
 
     model_path = model_dir + "/model.pt"
     data_path = model_dir + "/data.pkl"
+    params_path = model_dir + "/params.pkl"
 
     if gluon_ts:
         model = Predictor.deserialize(Path(model_dir))
@@ -71,6 +78,12 @@ def load_model(model, model_dir, gluon_ts=False):
     with open(data_path, "rb") as f:
         data = pickle.load(f)
 
-    print(f"model and data loaded from {model_dir}")
+    try:
+        with open(params_path, "rb") as f:
+            model_params = pickle.load(f)
+    except Exception:
+        pass
 
-    return model, data
+    print(f"model and data [+ params] loaded from {model_dir}")
+
+    return model, data, model_params
