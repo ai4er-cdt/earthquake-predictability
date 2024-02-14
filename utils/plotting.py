@@ -146,8 +146,8 @@ def plot_all_data_results(
         zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
     """
 
-    train_outputs = results_dict["y_train_pred"]
-    test_outputs = results_dict["y_test_pred"]
+    train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
+    test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
 
     # Extract every 'forecast' time step for plotting
     train_plot = np.array(
