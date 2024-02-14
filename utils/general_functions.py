@@ -1,13 +1,11 @@
 # Import relevant libraries
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-from scipy.stats import f_oneway, ttest_ind
-import matplotlib.pyplot as plt
 import torch
 
 ### --------------------------------------------- ###
 #               Functions for Pytorch               #
 ### --------------------------------------------- ###
+
 
 def set_seed(seed):
     """
@@ -18,8 +16,10 @@ def set_seed(seed):
     """
     np.random.seed(seed)  # Set NumPy random seed
     torch.manual_seed(seed)  # Set PyTorch random seed
-    torch.cuda.manual_seed(42)
-    torch.backends.cudnn.deterministic = True  # Ensure deterministic behavior when using CUDA
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = (
+        True  # Ensure deterministic behavior when using CUDA
+    )
 
 
 def set_torch_device():
@@ -31,13 +31,14 @@ def set_torch_device():
     """
     # Check if CUDA (NVIDIA GPU acceleration) is available
     if torch.cuda.is_available():
-        dev, map_location = "cuda", None  # Use GPU
-        print(
-            f"Total GPUs available: {torch.cuda.device_count()}"
-        )  # Display GPU count
-        # !nvidia-smi  # Display GPU details using nvidia-smi
+        dev = "cuda"
+        gpu_name = torch.cuda.get_device_name(torch.device("cuda"))
+        _, max_memory = torch.cuda.mem_get_info()
+        max_memory = max_memory / (1000**3)
+        print(f"GPU name: {gpu_name}")
+        print(f"Max GPU memory: {max_memory} GiB")
     else:
-        dev, map_location = "cpu", "cpu"  # Use CPU
+        dev = "cpu"
         print("No GPU available.")
 
     # Set PyTorch device based on the chosen device (cuda or cpu)

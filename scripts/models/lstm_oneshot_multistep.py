@@ -20,7 +20,7 @@ class MultiStepLSTMSingleLayer(nn.Module):
             Performs a forward pass through the LSTM layer.
 
     Example:
-        model = MultiStepLstmSingleLayer(N_VARIATES, HIDDEN_SIZE, N_LAYERS, OUTPUT_SIZE, device)
+        model = MultiStepLstmSingleLayer(n_variates, hidden_size, n_layers, output_size, device)
     """
 
     def __init__(self, n_variates, hidden_size, n_layers, output_size, device):
@@ -87,8 +87,6 @@ class MultiStepLSTMSingleLayer(nn.Module):
 class MultiStepLSTMMultiLayer(nn.Module):
     """
     A PyTorch neural network model using an LSTM for multi-step time series forecasting.
-    Credit - Pritt's model!!!
-
 
     Attributes:
         n_variates (int): Number of input variables (features).
@@ -102,7 +100,7 @@ class MultiStepLSTMMultiLayer(nn.Module):
             Performs a forward pass through the LSTM layer.
 
     Example:
-        model = MultiStepLstmMultiLayer(N_VARIATES, HIDDEN_SIZE, N_LAYERS, OUTPUT_SIZE, device)
+        model = MultiStepLstmMultiLayer(n_variates, hidden_size, n_layers, output_size, device)
     """
 
     def __init__(self, n_variates, hidden_size, n_layers, output_size, device):

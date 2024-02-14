@@ -23,7 +23,7 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
     """
 
     # Declare training device
-    print(f"training model on {device}")
+    print(f"Training model on {device}")
 
     # Move model and training and testing data to the specified device (cuda or cpu)
     model = model.to(device)
