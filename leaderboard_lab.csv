@@ -1,0 +1,3 @@
+user,r2,mae,rmse,exp_type,model_dir
+p341cam,0.9463892132691124,0.008378257043659687,0.015936626121401787,lab,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_tcn_2024-02-17T16:00:29_torch
+p341cam,0.9403539347575882,0.008252464,0.016809748,lab,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_lstm_2024-02-17T15:59:35_torch

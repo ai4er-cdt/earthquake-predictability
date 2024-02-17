@@ -1,6 +1,0 @@
-user,r2,mae,rmse,exp_type,model_dir
-ashine,0.8758077783402842,0.17703191936016083,0.253903329372406,cascadia,/gws/nopw/j04/ai4er/users/ashine/earthquake-predictability/results/ashine_TCN_cascadia_2024-02-14T11:32:16_torch
-p341cam,0.8687617631250683,0.1794716566801071,0.2609565556049347,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T22:41:02_torch
-p341cam,0.8687617631250683,0.1794716566801071,0.2609565556049347,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T23:17:19_torch
-p341cam,0.8687617631250683,0.17947165668010712,0.2609565556049347,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T23:21:25_torch
-p341cam,0.6556300841717727,0.3142239,0.42228106,cascadia,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_cascadia_2024-02-13T03:52:15_torch

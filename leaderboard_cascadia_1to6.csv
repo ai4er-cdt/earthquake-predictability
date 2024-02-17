@@ -1,0 +1,2 @@
+user,r2,mae,rmse,exp_type,model_dir
+p341cam,0.8641666488370416,0.060922004,0.08109493,cascadia_1to6,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_cascadia_1to6_2024-02-17T15:58:34_torch

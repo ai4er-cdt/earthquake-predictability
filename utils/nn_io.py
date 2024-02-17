@@ -78,6 +78,7 @@ def load_model(model, model_dir, gluon_ts=False):
     with open(data_path, "rb") as f:
         data = pickle.load(f)
 
+    model_params = None
     try:
         with open(params_path, "rb") as f:
             model_params = pickle.load(f)
