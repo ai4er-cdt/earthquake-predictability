@@ -1,0 +1,4 @@
+user,r2,mae,rmse,exp_type,model_dir
+ashine,0.9007072897072488,0.012000760063529,0.020205020904541,lab_p4581,/gws/nopw/j04/ai4er/users/ashine/earthquake-predictability/results/ashine_LSTM_lab_p4581_2024-02-18T11:02:20_torch
+ashine,0.9007072897072488,0.012000760063529015,0.020205020904541016,lab_p4581,/gws/nopw/j04/ai4er/users/ashine/earthquake-predictability/results/ashine_LSTM_lab_p4581_2024-02-18T11:13:53_torch
+ashine,0.8940174351869974,0.0096490960568189,0.021298723295331,lab_p4581,/gws/nopw/j04/ai4er/users/ashine/earthquake-predictability/results/ashine_LSTM_lab_p4581_2024-02-14T11:43:03_torch
