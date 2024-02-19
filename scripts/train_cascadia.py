@@ -3,9 +3,8 @@
 from dataclasses import dataclass
 
 import tyro
-from models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
-from models.tcn_oneshot_multistep import MultiStepTCN
 
+from utils.paths import PLOTS_DIR
 from utils.data_preprocessing import (
     create_dataset,
     moving_average_causal_filter,
@@ -16,14 +15,13 @@ from utils.dataset import SlowEarthquakeDataset
 from utils.eval import record_metrics
 from utils.general_functions import set_seed, set_torch_device
 from utils.nn_io import save_model
-from utils.nn_train import train_model
+from utils.nn_train import train_model, run_optuna_optimization
 from utils.plotting import (
-    PLOTS_DIRECTORY,
     plot_all_data_results,
     plot_metric_results,
 )
-
-# from typing import List
+from scripts.models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
+from scripts.models.tcn_oneshot_multistep import MultiStepTCN
 
 
 ### ------ Parameters Definition ------ ###
@@ -63,7 +61,7 @@ class ExperimentConfig:
 
     # Model config options
 
-    model: str = "TCN"
+    model: str = "TCN" # Or "LSTM"
     """model type to use"""
     n_variates: int = 1
     """number of variates in the dataset (e.g., univariate or multivariate)."""
@@ -73,7 +71,7 @@ class ExperimentConfig:
     """number of layers in the LSTM model."""
     kernel_size: int = 3
     """size of the kernel in the convolutional layers of the TCN model."""
-    epochs: int = 50
+    epochs: int = 75
     """number of epochs for training the model."""
     dropout: int = 0
     """fraction of neurons to drop in model"""
@@ -130,92 +128,95 @@ data_dict, scaler_X, scaler_y = normalise_dataset(
     X_train, y_train, X_test, y_test
 )
 
+### --- Try Optuna ---- ###
 
-### ------ Train LSTM ------ ###
+run_optuna_optimization(data_dict, scaler_y, args, device)
 
-# Choose model
-if args.model == "LSTM":
-    model = MultiStepLSTMMultiLayer(
-        args.n_variates,
-        args.hidden_size,
-        args.n_layers,
-        args.output_size,
-        device,
-    )
-elif args.model == "TCN":
-    model = MultiStepTCN(
-        args.n_variates,
-        args.lookback,
-        args.output_size,
-        [args.hidden_size],
-        args.kernel_size,
-        args.dropout,
-    )
+# ### ------ Train LSTM ------ ###
 
-# Train the model
-results_dict = train_model(model, args.epochs, data_dict, scaler_y, device)
+# # Choose model
+# if args.model == "LSTM":
+#     model = MultiStepLSTMMultiLayer(
+#         args.n_variates,
+#         args.hidden_size,
+#         args.n_layers,
+#         args.output_size,
+#         device,
+#     )
+# elif args.model == "TCN":
+#     model = MultiStepTCN(
+#         args.n_variates,
+#         args.lookback,
+#         args.output_size,
+#         [args.hidden_size],
+#         args.kernel_size,
+#         args.dropout,
+#     )
 
-
-if args.record:
-    model_dir = save_model(
-        model,
-        df_smoothed.values[-len(y_test) :],
-        results_dict,
-        range(0, len(y_test)),
-        model_name=f"{args.model}_cascadia",
-        model_params=args,
-    )
-
-    record_metrics(
-        model,
-        {"y_test": y_test, "y_pred": results_dict["y_test_pred"]},
-        "cascadia",
-        model_dir,
-    )
+# # Train the model
+# results_dict = train_model(model, args.epochs, data_dict, scaler_y, device)
 
 
-### ------ Plot Results ------ ###
+# if args.record:
+#     model_dir = save_model(
+#         model,
+#         df_smoothed.values[-len(y_test) :],
+#         results_dict,
+#         range(0, len(y_test)),
+#         model_name=f"{args.model}_cascadia",
+#         model_params=args,
+#     )
 
-if args.plot:
-    # Plot predictions against true values
-    test_start_idx = len(df_smoothed) - len(y_test)
+#     record_metrics(
+#         model,
+#         {"y_test": y_test, "y_pred": results_dict["y_test_pred"]},
+#         "cascadia",
+#         model_dir,
+#     )
 
-    plot_all_data_results(
-        test_start_idx,
-        data_dict,
-        results_dict,
-        args.lookback,
-        args.forecast,
-        args.plot_title,
-        args.plot_xlabel,
-        args.plot_ylabel,
-        [],
-    )
 
-    plot_all_data_results(
-        test_start_idx,
-        data_dict,
-        results_dict,
-        args.lookback,
-        args.forecast,
-        args.plot_title,
-        args.plot_xlabel,
-        args.plot_ylabel,
-        args.zoom_window,
-    )
+# ### ------ Plot Results ------ ###
 
-    # Plot RMSE and R^2
-    plot_metric_results(
-        args.epochs,
-        results_dict["train_rmse_list"],
-        results_dict["test_rmse_list"],
-        "RMSE",
-    )
-    plot_metric_results(
-        args.epochs,
-        results_dict["train_r2_list"],
-        results_dict["test_r2_list"],
-        "R$^2$",
-    )
+# if args.plot:
+#     # Plot predictions against true values
+#     test_start_idx = len(df_smoothed) - len(y_test)
 
-    print(f"Plots saved in {PLOTS_DIRECTORY}")
+#     plot_all_data_results(
+#         test_start_idx,
+#         data_dict,
+#         results_dict,
+#         args.lookback,
+#         args.forecast,
+#         args.plot_title,
+#         args.plot_xlabel,
+#         args.plot_ylabel,
+#         [],
+#     )
+
+#     plot_all_data_results(
+#         test_start_idx,
+#         data_dict,
+#         results_dict,
+#         args.lookback,
+#         args.forecast,
+#         args.plot_title,
+#         args.plot_xlabel,
+#         args.plot_ylabel,
+#         args.zoom_window,
+#     )
+
+#     # Plot RMSE and R^2
+#     plot_metric_results(
+#         args.epochs,
+#         results_dict["train_rmse_list"],
+#         results_dict["test_rmse_list"],
+#         "RMSE",
+#     )
+#     plot_metric_results(
+#         args.epochs,
+#         results_dict["train_r2_list"],
+#         results_dict["test_r2_list"],
+#         "R$^2$",
+#     )
+
+#     print(f"Plots saved in {PLOTS_DIR}")

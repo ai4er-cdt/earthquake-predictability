@@ -19,5 +19,8 @@ dependencies:
   - tqdm
   - xarray
   - gluonts
-  - bokeh
   - conda-build
+  - pip
+  - pip:
+    - tyro
+    - optuna

@@ -7,11 +7,7 @@ from pathlib import Path
 import torch
 from gluonts.model.predictor import Predictor
 
-from utils.paths import MAIN_DIRECTORY
-
-MAIN_DICT = MAIN_DIRECTORY
-RESULTS_DIRECTORY = f"{MAIN_DICT}/results"
-
+from utils.paths import MAIN_DIRECTORY, RESULTS_DIR
 
 def save_model(
     model,
@@ -19,7 +15,7 @@ def save_model(
     y_pred,
     y_pred_index,
     model_name=None,
-    directory=RESULTS_DIRECTORY,
+    directory=RESULTS_DIR,
     gluon_ts=False,
     uncertainty=None,
     model_params=None,

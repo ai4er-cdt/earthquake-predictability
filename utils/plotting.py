@@ -4,17 +4,14 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils.paths import MAIN_DIRECTORY, username
-
-PLOTS_DIRECTORY = f"{MAIN_DIRECTORY}/plots"
+from utils.paths import PLOTS_DIR, username
 
 ### --------------------------------------------- ###
 #         Functions for plotting dataset            #
 ### --------------------------------------------- ###
 
-
 def plot_original_vs_processed_data(
-    original_df, processed_df, plot_type, processing_label="Smoothed"
+    original_df, processed_df, plot_type, processing_label="Smoothed", save_plot=False
 ):
     """
     Plots relevant features in the original and processed datasets.
@@ -71,14 +68,15 @@ def plot_original_vs_processed_data(
     plt.show()
 
     # Save the plot
-    current_time = datetime.now().isoformat(timespec="seconds")
-    plt.savefig(
-        f"{PLOTS_DIRECTORY}/{username}_{current_time}_og_vs_proc.png",
-        bbox_inches="tight",
-    )
+    if save_plot:   
+        current_time = datetime.now().isoformat(timespec="seconds")
+        plt.savefig(
+            f"{PLOTS_DIR}/{username}_{current_time}_og_vs_proc.png",
+            bbox_inches="tight",
+        )
 
 
-def plot_example_sample(X, y, select_window, lookback, forecast):
+def plot_example_sample(X, y, select_window, lookback, forecast, save_plot=False):
     """
     Plots an example sample of X and y with the specified lookback and forecast.
 
@@ -108,11 +106,12 @@ def plot_example_sample(X, y, select_window, lookback, forecast):
     plt.show()
 
     # Save the plot
-    current_time = datetime.now().isoformat(timespec="seconds")
-    plt.savefig(
-        f"{PLOTS_DIRECTORY}/{username}_{current_time}_eg_sample.png",
-        bbox_inches="tight",
-    )
+    if save_plot:
+        current_time = datetime.now().isoformat(timespec="seconds")
+        plt.savefig(
+            f"{PLOTS_DIR}/{username}_{current_time}_eg_sample.png",
+            bbox_inches="tight",
+        )
 
 
 ### --------------------------------------------- ###
@@ -130,6 +129,7 @@ def plot_all_data_results(
     x_label,
     y_label,
     zoom_window,
+    save_plot=False
 ):
     """
     Plot true values, training predictions, and testing predictions for time series data.
@@ -205,15 +205,16 @@ def plot_all_data_results(
     plt.show()
 
     # Save the plot
-    current_time = datetime.now().isoformat(timespec="seconds")
-    plt.savefig(
-        f"{PLOTS_DIRECTORY}/{username}_{current_time}_all_data.png",
-        bbox_inches="tight",
-    )
+    if save_plot:
+        current_time = datetime.now().isoformat(timespec="seconds")
+        plt.savefig(
+            f"{PLOTS_DIR}/{username}_{current_time}_all_data.png",
+            bbox_inches="tight",
+        )
 
 
 def plot_metric_results(
-    n_epochs, train_metric_list, test_metric_list, metric_label
+    n_epochs, train_metric_list, test_metric_list, metric_label, save_plot=False
 ):
     """
     Plot a metric over epochs for training and testing sets.
@@ -243,8 +244,9 @@ def plot_metric_results(
     plt.show()
 
     # Save the plot
-    current_time = datetime.now().isoformat(timespec="seconds")
-    plt.savefig(
-        f"{PLOTS_DIRECTORY}/{username}_{current_time}_metrics.png",
-        bbox_inches="tight",
-    )
+    if save_plot:
+        current_time = datetime.now().isoformat(timespec="seconds")
+        plt.savefig(
+            f"{PLOTS_DIR}/{username}_{current_time}_metrics.png",
+            bbox_inches="tight",
+        )
