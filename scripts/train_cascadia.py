@@ -1,10 +1,10 @@
 # Import relevant libraries and local modules
 
 from dataclasses import dataclass
-
 import tyro
+import pickle
 
-from utils.paths import PLOTS_DIR
+from utils.paths import PLOTS_DIR, MAIN_DIRECTORY
 from utils.data_preprocessing import (
     create_dataset,
     moving_average_causal_filter,
@@ -15,13 +15,14 @@ from utils.dataset import SlowEarthquakeDataset
 from utils.eval import record_metrics
 from utils.general_functions import set_seed, set_torch_device
 from utils.nn_io import save_model
-from utils.nn_train import train_model, run_optuna_optimization
+from utils.nn_train import train_model
 from utils.plotting import (
     plot_all_data_results,
     plot_metric_results,
 )
 from scripts.models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
 from scripts.models.tcn_oneshot_multistep import MultiStepTCN
+
 
 
 ### ------ Parameters Definition ------ ###
@@ -45,6 +46,13 @@ class ExperimentConfig:
     """flag to indicate whether results should be recorded."""
     plot: bool = True
     """flag to indicate whether to plot the results."""
+
+    # Optuna config options
+
+    optuna: bool = False
+    """flag to indicate whether to use optuna for hyperparameter optimization."""
+    optuna_id: int = 0
+    """optuna study id for saving a study."""
 
     # Preprocessing config options
 
@@ -73,7 +81,7 @@ class ExperimentConfig:
     """size of the kernel in the convolutional layers of the TCN model."""
     epochs: int = 75
     """number of epochs for training the model."""
-    dropout: int = 0
+    dropout: float = 0
     """fraction of neurons to drop in model"""
 
     # Plotting config options
@@ -128,95 +136,98 @@ data_dict, scaler_X, scaler_y = normalise_dataset(
     X_train, y_train, X_test, y_test
 )
 
-### --- Try Optuna ---- ###
+### ------ Train Models ------ ###
 
-run_optuna_optimization(data_dict, scaler_y, args, device)
+# Choose model
+if args.model == "LSTM":
+    model = MultiStepLSTMMultiLayer(
+        args.n_variates,
+        args.hidden_size,
+        args.n_layers,
+        args.output_size,
+        device,
+    )
+elif args.model == "TCN":
+    model = MultiStepTCN(
+        args.n_variates,
+        args.lookback,
+        args.output_size,
+        [args.hidden_size],
+        args.kernel_size,
+        args.dropout,
+    )
 
-# ### ------ Train LSTM ------ ###
+# Train the model
+results_dict = train_model(model, args.epochs, data_dict, scaler_y, device)
 
-# # Choose model
-# if args.model == "LSTM":
-#     model = MultiStepLSTMMultiLayer(
-#         args.n_variates,
-#         args.hidden_size,
-#         args.n_layers,
-#         args.output_size,
-#         device,
-#     )
-# elif args.model == "TCN":
-#     model = MultiStepTCN(
-#         args.n_variates,
-#         args.lookback,
-#         args.output_size,
-#         [args.hidden_size],
-#         args.kernel_size,
-#         args.dropout,
-#     )
+if args.optuna:
+    with open(f"{MAIN_DIRECTORY}/scripts/tmp/results_dict_{args.optuna_id}.tmp", "wb") as handle:
+        pickle.dump(results_dict, handle)
 
-# # Train the model
-# results_dict = train_model(model, args.epochs, data_dict, scaler_y, device)
+    args.record = False
+    args.plot = False
 
+if args.record:
+    model_dir = save_model(
+        model,
+        df_smoothed.values[-len(y_test) :],
+        results_dict,
+        range(0, len(y_test)),
+        model_name=f"{args.model}_cascadia",
+        model_params=args,
+    )
 
-# if args.record:
-#     model_dir = save_model(
-#         model,
-#         df_smoothed.values[-len(y_test) :],
-#         results_dict,
-#         range(0, len(y_test)),
-#         model_name=f"{args.model}_cascadia",
-#         model_params=args,
-#     )
-
-#     record_metrics(
-#         model,
-#         {"y_test": y_test, "y_pred": results_dict["y_test_pred"]},
-#         "cascadia",
-#         model_dir,
-#     )
+    record_metrics(
+        model,
+        {"y_test": y_test, "y_pred": results_dict["y_test_pred"]},
+        "cascadia",
+        model_dir,
+    )
 
 
-# ### ------ Plot Results ------ ###
+### ------ Plot Results ------ ###
 
-# if args.plot:
-#     # Plot predictions against true values
-#     test_start_idx = len(df_smoothed) - len(y_test)
+if args.plot:
+    # Plot predictions against true values
+    test_start_idx = len(df_smoothed) - len(y_test)
 
-#     plot_all_data_results(
-#         test_start_idx,
-#         data_dict,
-#         results_dict,
-#         args.lookback,
-#         args.forecast,
-#         args.plot_title,
-#         args.plot_xlabel,
-#         args.plot_ylabel,
-#         [],
-#     )
+    plot_all_data_results(
+        test_start_idx,
+        data_dict,
+        results_dict,
+        args.lookback,
+        args.forecast,
+        args.plot_title,
+        args.plot_xlabel,
+        args.plot_ylabel,
+        [],
+    )
 
-#     plot_all_data_results(
-#         test_start_idx,
-#         data_dict,
-#         results_dict,
-#         args.lookback,
-#         args.forecast,
-#         args.plot_title,
-#         args.plot_xlabel,
-#         args.plot_ylabel,
-#         args.zoom_window,
-#     )
+    plot_all_data_results(
+        test_start_idx,
+        data_dict,
+        results_dict,
+        args.lookback,
+        args.forecast,
+        args.plot_title,
+        args.plot_xlabel,
+        args.plot_ylabel,
+        args.zoom_window,
+    )
 
-#     # Plot RMSE and R^2
-#     plot_metric_results(
-#         args.epochs,
-#         results_dict["train_rmse_list"],
-#         results_dict["test_rmse_list"],
-#         "RMSE",
-#     )
-#     plot_metric_results(
-#         args.epochs,
-#         results_dict["train_r2_list"],
-#         results_dict["test_r2_list"],
-#         "R$^2$",
-#     )
+    # Plot RMSE and R^2
+    plot_metric_results(
+        args.epochs,
+        results_dict["train_rmse_list"],
+        results_dict["test_rmse_list"],
+        "RMSE",
+    )
+    plot_metric_results(
+        args.epochs,
+        results_dict["train_r2_list"],
+        results_dict["test_r2_list"],
+        "R$^2$",
+    )
 
-#     print(f"Plots saved in {PLOTS_DIR}")
+    print(f"Plots saved in {PLOTS_DIR}")
+

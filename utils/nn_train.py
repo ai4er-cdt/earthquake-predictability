@@ -42,10 +42,8 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
     )
 
     # Lists to store RMSE values for plotting
-    train_rmse_list = []
-    test_rmse_list = []
-    train_r2_list = []
-    test_r2_list = []
+    train_rmse_list = []; test_rmse_list = []
+    train_r2_list = []; test_r2_list = []
 
     # Progress bar length
     pbar = tqdm.tqdm(range(n_epochs))
@@ -103,3 +101,6 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
     }
 
     return results_dict
+
+
+

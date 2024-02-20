@@ -181,5 +181,6 @@ notebooks/LSTM_bestmodel.pt
 data_local/
 plots_local/
 results_local/
+*.tmp
 
 *.png
