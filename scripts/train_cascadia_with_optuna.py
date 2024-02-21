@@ -5,9 +5,9 @@ import pickle
 import random
 import time
 import os
+from datetime import datetime
 
-from utils.paths import MAIN_DIRECTORY
-from utils.nn_io import username, current_time
+from utils.paths import MAIN_DIRECTORY, username
 
 @dataclass
 class OptunaExperimentConfig:
@@ -117,6 +117,7 @@ best_results_dict = run_optuna_optimization()
 
 # # Construct filename with user, model type, and current time for uniqueness
 # optuna_results_dir = f"{MAIN_DIRECTORY}/scripts/optuna_results"
+# current_time = datetime.now().isoformat(timespec="seconds")
 # base_filename = f"{username}_best_{opt_args.model}_{current_time}.pkl"
 # model_dir = os.path.join(optuna_results_dir, base_filename + ".pkl")
 

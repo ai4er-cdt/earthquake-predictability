@@ -98,6 +98,8 @@ class ExperimentConfig:
     """minimum x-axis value for zooming in on the plot."""
     zoom_max: int = 3400
     """maximum x-axis value for zooming in on the plot."""
+    save_plots: bool = True
+    """flag to indicate whether to save the plots."""
 
     def __post_init__(self):
         self.output_size = self.forecast
@@ -192,7 +194,6 @@ if args.plot:
     test_start_idx = len(df_smoothed) - len(y_test)
 
     plot_all_data_results(
-        test_start_idx,
         data_dict,
         results_dict,
         args.lookback,
@@ -201,10 +202,10 @@ if args.plot:
         args.plot_xlabel,
         args.plot_ylabel,
         [],
+        save_plot=args.save_plots
     )
 
     plot_all_data_results(
-        test_start_idx,
         data_dict,
         results_dict,
         args.lookback,
@@ -213,6 +214,8 @@ if args.plot:
         args.plot_xlabel,
         args.plot_ylabel,
         args.zoom_window,
+        plot_type="scatter",
+        save_plot=args.save_plots
     )
 
     # Plot RMSE and R^2
@@ -221,13 +224,16 @@ if args.plot:
         results_dict["train_rmse_list"],
         results_dict["test_rmse_list"],
         "RMSE",
+        args.save_plots
     )
     plot_metric_results(
         args.epochs,
         results_dict["train_r2_list"],
         results_dict["test_r2_list"],
         "R$^2$",
+        args.save_plots
     )
 
-    print(f"Plots saved in {PLOTS_DIR}")
+    if args.save_plots:
+        print(f"Plots saved in {PLOTS_DIR}")
 
