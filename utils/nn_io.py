@@ -1,4 +1,3 @@
-import getpass
 import os
 import pickle
 from datetime import datetime
@@ -7,11 +6,7 @@ from pathlib import Path
 import torch
 from gluonts.model.predictor import Predictor
 
-from utils.paths import MAIN_DIRECTORY
-
-MAIN_DICT = MAIN_DIRECTORY
-RESULTS_DIRECTORY = f"{MAIN_DICT}/results"
-
+from utils.paths import RESULTS_DIR, username
 
 def save_model(
     model,
@@ -19,14 +14,14 @@ def save_model(
     y_pred,
     y_pred_index,
     model_name=None,
-    directory=RESULTS_DIRECTORY,
+    directory=RESULTS_DIR,
     gluon_ts=False,
     uncertainty=None,
     model_params=None,
 ):
     current_time = datetime.now().isoformat(timespec="seconds")
 
-    base_filename = getpass.getuser()
+    base_filename = username
     base_filename += "_" + model_name if model_name else None
     base_filename += "_" + current_time
 

@@ -26,5 +26,7 @@ dependencies:
   - bokeh
   - gluonts
   - conda-build
-- pip:  #FIXME: this is untested
-  - tyro
+  - pip
+  - pip:
+    - tyro
+    - optuna

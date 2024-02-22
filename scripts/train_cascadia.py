@@ -1,11 +1,10 @@
 # Import relevant libraries and local modules
 
 from dataclasses import dataclass
-
 import tyro
-from models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
-from models.tcn_oneshot_multistep import MultiStepTCN
+import pickle
 
+from utils.paths import PLOTS_DIR, MAIN_DIRECTORY
 from utils.data_preprocessing import (
     create_dataset,
     moving_average_causal_filter,
@@ -16,14 +15,15 @@ from utils.dataset import SlowEarthquakeDataset
 from utils.eval import record_metrics
 from utils.general_functions import set_seed, set_torch_device
 from utils.nn_io import save_model
-from utils.nn_train import train_model
+from utils.nn_train import train_model, eval_model_on_test_set
 from utils.plotting import (
-    PLOTS_DIRECTORY,
     plot_all_data_results,
     plot_metric_results,
+    plot_single_seg_result,
 )
+from scripts.models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
+from scripts.models.tcn_oneshot_multistep import MultiStepTCN
 
-# from typing import List
 
 
 ### ------ Parameters Definition ------ ###
@@ -48,6 +48,13 @@ class ExperimentConfig:
     plot: bool = True
     """flag to indicate whether to plot the results."""
 
+    # Optuna config options
+
+    optuna: bool = False
+    """flag to indicate whether to use optuna for hyperparameter optimization."""
+    optuna_id: int = 0
+    """optuna study id for saving a study."""
+
     # Preprocessing config options
 
     smoothing_window: int = 5
@@ -58,12 +65,15 @@ class ExperimentConfig:
     """number of past observations to consider for forecasting."""
     forecast: int = 30
     """number of future observations to forecast."""
-    n_forecast_windows: int = 40
+    n_forecast_windows: int = 30
     """number of forecasted windows in the test set."""
+    n_validation_windows: int = 30
+    """number of validation windows in the test set."""
+
 
     # Model config options
 
-    model: str = "TCN"
+    model: str = "TCN" # Or "LSTM"
     """model type to use"""
     n_variates: int = 1
     """number of variates in the dataset (e.g., univariate or multivariate)."""
@@ -73,9 +83,9 @@ class ExperimentConfig:
     """number of layers in the LSTM model."""
     kernel_size: int = 3
     """size of the kernel in the convolutional layers of the TCN model."""
-    epochs: int = 50
+    epochs: int = 75
     """number of epochs for training the model."""
-    dropout: int = 0
+    dropout: float = 0
     """fraction of neurons to drop in model"""
 
     # Plotting config options
@@ -92,6 +102,10 @@ class ExperimentConfig:
     """minimum x-axis value for zooming in on the plot."""
     zoom_max: int = 3400
     """maximum x-axis value for zooming in on the plot."""
+    chosen_seg: int = 3200
+    """segment of lookback and forecast to plot."""
+    save_plots: bool = True
+    """flag to indicate whether to save the plots."""
 
     def __post_init__(self):
         self.output_size = self.forecast
@@ -123,15 +137,14 @@ df_smoothed = moving_average_causal_filter(
 X, y = create_dataset(df_smoothed, args.lookback, args.forecast)
 
 # Split into train and test sets and normalise it
-X_train, y_train, X_test, y_test = split_train_test_forecast_windows(
-    X, y, args.forecast, args.n_forecast_windows
+X_train, y_train, X_val, y_val, X_test, y_test = split_train_test_forecast_windows(
+    X, y, args.forecast, args.n_forecast_windows, args.n_validation_windows
 )
 data_dict, scaler_X, scaler_y = normalise_dataset(
-    X_train, y_train, X_test, y_test
+    X_train, y_train, X_test, y_test, X_val, y_val
 )
 
-
-### ------ Train LSTM ------ ###
+### ------ Train Models ------ ###
 
 # Choose model
 if args.model == "LSTM":
@@ -154,7 +167,15 @@ elif args.model == "TCN":
 
 # Train the model
 results_dict = train_model(model, args.epochs, data_dict, scaler_y, device)
+results_dict = eval_model_on_test_set(model, results_dict, data_dict, scaler_y, device)
 
+
+if args.optuna:
+    with open(f"{MAIN_DIRECTORY}/scripts/tmp/results_dict_{args.optuna_id}.tmp", "wb") as handle:
+        pickle.dump(results_dict, handle)
+
+    args.record = False
+    args.plot = False
 
 if args.record:
     model_dir = save_model(
@@ -178,10 +199,20 @@ if args.record:
 
 if args.plot:
     # Plot predictions against true values
-    test_start_idx = len(df_smoothed) - len(y_test)
+
+    plot_single_seg_result(
+        data_dict,
+        results_dict,
+        args.lookback,
+        args.forecast,
+        args.chosen_seg,
+        args.plot_title,
+        args.plot_xlabel,
+        args.plot_ylabel, 
+        save_plot=args.save_plots
+    )
 
     plot_all_data_results(
-        test_start_idx,
         data_dict,
         results_dict,
         args.lookback,
@@ -190,10 +221,10 @@ if args.plot:
         args.plot_xlabel,
         args.plot_ylabel,
         [],
+        save_plot=args.save_plots
     )
 
     plot_all_data_results(
-        test_start_idx,
         data_dict,
         results_dict,
         args.lookback,
@@ -202,20 +233,26 @@ if args.plot:
         args.plot_xlabel,
         args.plot_ylabel,
         args.zoom_window,
+        plot_type="scatter",
+        save_plot=args.save_plots
     )
 
     # Plot RMSE and R^2
     plot_metric_results(
         args.epochs,
         results_dict["train_rmse_list"],
-        results_dict["test_rmse_list"],
+        results_dict["val_rmse_list"],
         "RMSE",
+        args.save_plots
     )
     plot_metric_results(
         args.epochs,
         results_dict["train_r2_list"],
-        results_dict["test_r2_list"],
+        results_dict["val_r2_list"],
         "R$^2$",
+        args.save_plots
     )
 
-    print(f"Plots saved in {PLOTS_DIRECTORY}")
+    if args.save_plots:
+        print(f"Plots saved in {PLOTS_DIR}")
+
