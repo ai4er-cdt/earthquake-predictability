@@ -22,7 +22,7 @@ def moving_average_causal_filter(df, smoothing_window, downsampling_factor):
     """
     # Apply rolling mean with causal filtering and downsampling
     downsampled_df = (
-        df.rolling(window=int(smoothing_window * 5), step=int(downsampling_factor), center=False).mean().dropna()
+        df.rolling(window=int(smoothing_window), step=int(downsampling_factor), center=False).mean().dropna()
     )
 
     # Reset index and drop any remaining NaN values
