@@ -133,41 +133,70 @@ def plot_single_seg_result(
         save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
     """
 
-    # Convert predictions from PyTorch tensors to NumPy arrays
-    train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
-    test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
-
-    # Initialize segment index and sizes
-    i_seg = chosen_seg  # Example segment index
-    seg_size = lookback + forecast  # Total size of the segment
-    i_seg_test = i_seg - len(train_outputs)  # Index for test segment
-    i_seg_lb = i_seg * (forecast + lookback)  # Adjusted index for plotting
-
-    # Create a figure for plotting
     plt.figure(figsize=(15, 6))
 
     # Determine the plotting function based on the plot type
     plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
 
-    # Plot true values for the segment
+    # Initialize segment index and sizes
+    i_seg = chosen_seg  # Example segment index
+    seg_size = lookback + forecast  # Total size of the segment
+    i_seg_lb = i_seg * (forecast + lookback)  # Adjusted index for plotting
+
+    # Combined true value data
+    combined_true = np.concatenate((data_dict["y_train"][:, 0], data_dict["y_test"][:, 0]))
+
+    # Training set predictions
+    train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
+    # Extract every 'forecast' time step for plotting
+    train_plot = np.array(
+        [train_outputs[idx] for idx in range(0, len(train_outputs), forecast)]
+    ).reshape(-1, 1)
+
+    # Check for validation set
+    has_val = "X_val_sc" in data_dict and "y_val_sc" in data_dict
+    val_plot = []
+
+    if has_val:
+        # Combined true value data updated with validation set
+        combined_true = np.concatenate((data_dict["y_train"][:, 0], data_dict["y_val"][:, 0], data_dict["y_test"][:, 0]))
+
+        # Validation set predictions
+        val_outputs = results_dict["y_val_pred"].cpu().detach().numpy()
+        # Extract every 'forecast' time step for plotting
+        val_plot = np.array(
+            [val_outputs[idx] for idx in range(0, len(val_outputs), forecast)]
+        ).reshape(-1, 1)
+
+    # Testing set predictions
+    test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
+    # Extract every 'forecast' time step for plotting
+    test_plot = np.array(
+        [test_outputs[idx] for idx in range(0, len(test_outputs), forecast)]
+    ).reshape(-1, 1)
+
+    # Combine training and testing predictions for plotting (and val if present) 
+    combined_plot = np.concatenate((train_plot, val_plot, test_plot))
+
+    # Plot true lookback values for the segment
     plot_fn(
         np.arange(seg_size) + i_seg_lb,
-        data_dict["y_test"][i_seg_test:i_seg_test + seg_size, 0],
-        label="True values",
+        combined_true[i_seg:i_seg + seg_size],
+        label="True lookback values",
     )
     
     # Plot true values for the forecast period
     plot_fn(
         np.arange(forecast) + (i_seg_lb + seg_size),
-        data_dict["y_test"][i_seg_test + seg_size:i_seg_test + seg_size + forecast, 0],
+        combined_true[i_seg + seg_size:i_seg + seg_size + forecast],
         label="True forecast values",
     )
     
-    # Plot testing prediction for the forecast period
+    # Plot prediction for the forecast period
     plot_fn(
         np.arange(forecast) + (i_seg_lb + seg_size),
-        test_outputs[i_seg_test + seg_size],
-        label="Testing prediction",
+        combined_plot[i_seg + seg_size:i_seg + seg_size + forecast],
+        label="Predicted values",
     )
 
 
@@ -225,74 +254,116 @@ def plot_all_data_results(
         zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
         save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
     """
+    plt.figure(figsize=(25, 6))
 
+    # Determine the plotting function based on the plot type
+    plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
+
+    # Combined true value data
+    combined_true = np.concatenate((data_dict["y_train"][:, 0], data_dict["y_test"][:, 0]))
+
+    # Training set predictions
     train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
-    test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
-
     # Extract every 'forecast' time step for plotting
     train_plot = np.array(
         [train_outputs[idx] for idx in range(0, len(train_outputs), forecast)]
     ).reshape(-1, 1)
 
+    # Calculate end of training set index
+    end_of_train_index = len(train_plot)
+
+    # Check for validation set
+    has_val = "X_val_sc" in data_dict and "y_val_sc" in data_dict
+    val_plot = []
+
+    if has_val:
+        # Combined true value data updated with validation set
+        combined_true = np.concatenate((data_dict["y_train"][:, 0], data_dict["y_val"][:, 0], data_dict["y_test"][:, 0]))
+
+        # Validation set predictions
+        val_outputs = results_dict["y_val_pred"].cpu().detach().numpy()
+        # Extract every 'forecast' time step for plotting
+        val_plot = np.array(
+            [val_outputs[idx] for idx in range(0, len(val_outputs), forecast)]
+        ).reshape(-1, 1)
+
+    # Testing set predictions
+    test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
+    # Extract every 'forecast' time step for plotting
     test_plot = np.array(
         [test_outputs[idx] for idx in range(0, len(test_outputs), forecast)]
     ).reshape(-1, 1)
 
-    # Calculate starting indices for test data and forecast
-    test_start_index = len(train_plot)
-    test_forecast_start_index = len(train_plot) + lookback
-
     # Combine training and testing data for plotting
-    combined_plot = np.concatenate((train_plot, test_plot))
-
-    # Determine the plotting function based on the plot type
-    plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
-
-    # Initialize plot
-    plt.figure(figsize=(25, 6))
+    combined_plot = np.concatenate((train_plot, val_plot, test_plot))
 
     # Plot true values
     plot_fn(
         range(lookback, lookback + len(combined_plot)),
-        np.concatenate(
-            (data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])
-        ),
+        combined_true,
         label="True values",
     )
+    
     # Plot training predictions
     plot_fn(
         range(lookback, lookback + len(train_plot)),
         train_plot,
         label="Training prediction",
     )
+
+    # If validation set is present
+    if has_val:
+        # Plot validation predictions
+        plot_fn(
+            range(lookback + len(train_plot), lookback + len(val_plot) + len(train_plot)),
+            val_plot,
+            label="Validation prediction",
+        )
+
     # Plot testing predictions
     plot_fn(
-        range(lookback + len(train_plot), lookback + len(combined_plot)),
+        range(lookback + len(train_plot) + len(val_plot), lookback + len(combined_plot)),
         test_plot,
         label="Testing prediction",
     )
 
-    # Vertical axis to indicate start of test data
+    if has_val:
+        # Plot vertical axis to indicate start of val/test data
+        plt.axvline(
+            x=end_of_train_index,
+            color="gray",
+            label="Validation set start",
+        )
+        # Plot vertical axis to indicate start of first val/test forecast window
+        plt.axvline(
+            x=end_of_train_index+lookback,
+            color="gray",
+            linestyle="--",
+            label="New forecast window",
+        )
+    
+    # If val_plot=0, the below will plot on the above
+    # Plot vertical axis to indicate start of test data
     plt.axvline(
-        x=test_start_index,
-        color="gray",
+        x=end_of_train_index+len(val_plot),
+        color="black",
         label="Test set start",
     )
-    # Vertical axis to indicate start of first test forecast window
+    # Plot vertical axis to indicate start of first test forecast window
     plt.axvline(
-        x=test_forecast_start_index,
-        color="gray",
+        x=end_of_train_index+lookback+len(val_plot),
+        color="black",
         linestyle="--",
         label="New forecast window",
-    )
+        )
 
     # If a zoom range is provided
     if len(zoom_window) > 0:
 
         # Add vertical lines to indicate forecast window starts
-        n_forecast_windows = int(len(test_plot)/forecast)
-        for i in range(n_forecast_windows):
-            x = test_forecast_start_index + i * forecast
+        n_val_test_windows = int((len(val_plot)+len(test_plot))/forecast)
+        for i in range(n_val_test_windows):
+            x = end_of_train_index + i * forecast
             plt.axvline(x=x, color="grey", linestyle="--")
         
         # Zoom into the specified range
@@ -316,39 +387,37 @@ def plot_all_data_results(
         )
 
 
-
 def plot_metric_results(
-    n_epochs, train_metric_list, test_metric_list, metric_label, save_plot=False
+    n_epochs, train_metric_list, val_or_test_metric_list, metric_label, val_or_test="Test", save_plot=False
 ):
     """
-    Plot a metric over epochs for training and testing sets.
+    Plot a metric over epochs for training, testing, and optionally validation sets.
 
     Parameters:
         n_epochs (int): Number of training epochs.
-        train_metric_list (list): List of metric values for each training epoch.
-        test_metric_list (list): List of metric values for each testing epoch.
-        metric_label (str): Label for the metric being plotted.
-        save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
+        train_metric_list (list): Metric values for the training set across epochs.
+        val_or_test_metric_list (list): Metric values for the test set across epochs.
+        metric_label (str): Name of the metric being plotted (e.g., 'RMSE', 'Accuracy').
+        val_or_test (str, optional): Type of metric being plotted, "Test" or "Validation". Defaults to "Test".
+        save_plot (bool, optional): If True, saves the plot to a specified directory. Defaults to False.
     """
-    # Plot metric over epochs
     plt.figure(figsize=(10, 6))
-    plt.plot(
-        range(0, n_epochs), train_metric_list, label=f"Train {metric_label}"
-    )
-    plt.plot(
-        range(0, n_epochs), test_metric_list, label=f"Test {metric_label}"
-    )
 
-    # Set plot labels, title, and legend
+    # Plot training set metrics over epochs
+    plt.plot(range(1, n_epochs + 1), train_metric_list, label=f"Train {metric_label}")
+    
+    # Plot validation or test set metrics over epochs
+    plt.plot(range(1, n_epochs + 1), val_or_test_metric_list, label=f"{val_or_test} {metric_label}")
+
+    # Setting plot labels and title
     plt.xlabel("Epochs")
-    plt.ylabel(f"{metric_label}")
-    plt.title(f"{metric_label} over Epochs")
-    plt.legend()
+    plt.ylabel(metric_label)
+    plt.title(f"{metric_label} Over Epochs")
+    plt.legend(loc="best")
 
-    # Display the plot
     plt.show()
-
-    # Save the plot if specified
+    
+    # Optionally save the plot
     if save_plot:
         current_time = datetime.now().isoformat(timespec="seconds")
         plt.savefig(

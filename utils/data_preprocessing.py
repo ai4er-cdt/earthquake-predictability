@@ -102,54 +102,72 @@ def create_dataset(dataset, lookback, forecast):
     return X_tensor, y_tensor
 
 
-
-def split_train_test_forecast_windows(X, y, forecast, n_forecast_windows):
+def split_train_test_forecast_windows(X, y, forecast, n_forecast_windows, n_validation_windows=0):
     """
-    Split input features (X) and target values (y) into training and testing sets
-    for time series forecasting.
+    Split input features (X) and target values (y) into training, optional validation, and testing sets
+    for time series forecasting. The creation of a validation set is conditional based on the
+    number of validation windows specified.
 
     Parameters:
         X (torch.Tensor): Input features for time series forecasting.
         y (torch.Tensor): Target values for time series forecasting.
         forecast (int): Number of time steps to predict into the future.
         n_forecast_windows (int): Number of forecast windows to reserve for testing.
+        n_validation_windows (int, optional): Number of forecast windows to reserve for validation. Defaults to 0.
 
     Returns:
-        tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor): A tuple containing
-        X_train, y_train, X_test, y_test for training and testing the forecasting model.
+        tuple: A tuple containing X_train, y_train, and depending on the presence of a validation set, X_val, y_val, followed by X_test, y_test for training, validating (if applicable), and testing the forecasting model.
     """
     # Calculate the total size of the test set in terms of forecast windows
     test_size = n_forecast_windows * forecast
+    val_size = n_validation_windows * forecast
+
+    # Total size reserved for validation and test sets
+    val_test_size = val_size + test_size
 
     # Determine excess data that won't fit into complete forecast windows
-    excess = X[:-test_size].shape[0] - forecast * (X[:-test_size].shape[0] // forecast)
+    excess = X[:-(val_test_size)].shape[0] - forecast * (X[:-(val_test_size)].shape[0] // forecast)
 
     # Extract test set
     X_test, y_test = X[-test_size:], y[-test_size:]
 
-    # Extract training set, excluding the test set and any excess data
-    X_train, y_train = X[excess:-test_size], y[excess:-test_size]
+    # Initialize validation sets to None
+    X_val, y_val = None, None
 
-    return X_train, y_train, X_test, y_test
+    # Conditionally extract validation set
+    if n_validation_windows > 0:
+        X_val, y_val = X[-(val_test_size):-test_size], y[-(val_test_size):-test_size]
 
+    # Extract training set, excluding the validation (if any) and test sets and any excess data
+    X_train, y_train = X[excess:-(val_test_size)], y[excess:-(val_test_size)]
+
+    # Return tuple based on whether a validation set is present
+    if n_validation_windows > 0:
+        return X_train, y_train, X_val, y_val, X_test, y_test
+    else:
+        return X_train, y_train, X_test, y_test
 
 ### --------------------------------------------- ###
 #        Normalise dataset on training set          #
 ### --------------------------------------------- ###
 
-def normalise_dataset(X_train, y_train, X_test, y_test):
+
+def normalise_dataset(X_train, y_train, X_test, y_test, X_val=None, y_val=None):
     """
-    Normalize the input and output datasets using Min-Max scaling.
+    Normalize the input and output datasets using Min-Max scaling. Optionally handles validation data if provided.
     
     Parameters:
         X_train (numpy.ndarray): Training input data.
         y_train (numpy.ndarray): Training output data.
         X_test (numpy.ndarray): Test input data.
         y_test (numpy.ndarray): Test output data.
+        X_val (numpy.ndarray, optional): Validation input data.
+        y_val (numpy.ndarray, optional): Validation output data.
 
     Returns:
         tuple: A tuple containing a dictionary with various dataset arrays,
                and MinMaxScaler instances for input and output data.
+               Optionally includes validation data if provided.
     """
 
     # Initialize MinMaxScaler for input and output
@@ -157,29 +175,37 @@ def normalise_dataset(X_train, y_train, X_test, y_test):
     scaler_y = MinMaxScaler()
 
     # Fit and transform the training set for both input and output
-    X_train_sc, X_test_sc = scaler_X.fit_transform(X_train), scaler_X.transform(X_test)
-    y_train_sc, y_test_sc = scaler_y.fit_transform(y_train), scaler_y.transform(y_test)
+    X_train_sc = scaler_X.fit_transform(X_train)
+    y_train_sc = scaler_y.fit_transform(y_train)
 
-    # Convert scaled arrays to float tensors
-    X_train_sc, X_test_sc = (
-        torch.from_numpy(X_train_sc).float(),
-        torch.from_numpy(X_test_sc).float(),
-    )
-    y_train_sc, y_test_sc = (
-        torch.from_numpy(y_train_sc).float(),
-        torch.from_numpy(y_test_sc).float(),
-    )
+    # Transform the test set using the fitted scalers
+    X_test_sc = scaler_X.transform(X_test)
+    y_test_sc = scaler_y.transform(y_test)
 
-    # Create a dictionary to store various dataset arrays
+    # Prepare the dictionary to include scaled datasets
     data_dict = {
         "X_train": X_train,
         "y_train": y_train,
         "X_test": X_test,
         "y_test": y_test,
-        "X_train_sc": X_train_sc,
-        "y_train_sc": y_train_sc,
-        "X_test_sc": X_test_sc,
-        "y_test_sc": y_test_sc
+        "X_train_sc": torch.from_numpy(X_train_sc).float(),
+        "y_train_sc": torch.from_numpy(y_train_sc).float(),
+        "X_test_sc": torch.from_numpy(X_test_sc).float(),
+        "y_test_sc": torch.from_numpy(y_test_sc).float(),
     }
-    
+
+    # Check if validation data is provided
+    if X_val is not None and y_val is not None:
+        # Transform the validation set using the fitted scalers
+        X_val_sc = scaler_X.transform(X_val)
+        y_val_sc = scaler_y.transform(y_val)
+
+        # Add the validation data to the dictionary
+        data_dict.update({
+            "X_val": X_val,
+            "y_val": y_val,
+            "X_val_sc": torch.from_numpy(X_val_sc).float(),
+            "y_val_sc": torch.from_numpy(y_val_sc).float(),
+        })
+
     return data_dict, scaler_X, scaler_y

@@ -5,6 +5,7 @@ import pickle
 import random
 import time
 import os
+import csv
 from datetime import datetime
 
 from utils.paths import MAIN_DIRECTORY, username
@@ -17,12 +18,14 @@ class OptunaExperimentConfig:
     Attributes:
         n_trials_optuna (int): Number of optimization trials to conduct.
         n_jobs_optuna (int): Number of parallel jobs for executing optimization trials.
-        model (str): Type of model to optimize. Supports "TCN" (Temporal Convolutional Network) or "LSTM" (Long Short-Term Memory).
+        model (str): Type of model to optimize. Supports "TCN" or "LSTM".
+        results_format (str): Format to save the results in. Supports "csv" or "pkl".
     """
     
-    n_trials_optuna: int = 5 
-    n_jobs_optuna: int = 5 # -1 to automatically take number of cores, but keep fixed for Jasmin
+    n_trials_optuna: int = 4 
+    n_jobs_optuna: int = 4 # -1 to automatically take number of cores, but keep fixed for Jasmin
     model: str = "TCN"  # Model type ("TCN" or "LSTM")
+    results_format: str = "csv"  # Format to save the results in ("csv" or "pkl")
    
 opt_args = OptunaExperimentConfig()
 
@@ -118,12 +121,19 @@ best_results_dict = run_optuna_optimization()
 # # Construct filename with user, model type, and current time for uniqueness
 # optuna_results_dir = f"{MAIN_DIRECTORY}/scripts/optuna_results"
 # current_time = datetime.now().isoformat(timespec="seconds")
-# base_filename = f"{username}_best_{opt_args.model}_{current_time}.pkl"
-# model_dir = os.path.join(optuna_results_dir, base_filename + ".pkl")
+# base_filename = f"{username}_best_{opt_args.model}_{current_time}.{opt_args.results_format}"
+# model_dir = os.path.join(optuna_results_dir, base_filename)
 
 # # Save the best hyperparameters to a file
-# with open(model_dir, "wb") as f:
-#     pickle.dump(best_results_dict, f)
+# if opt_args.results_format == "csv":
+#     # Save the best hyperparameters to a CSV file
+#     with open(model_dir, "w") as f:
+#         writer = csv.writer(f)
+#         for key, value in best_results_dict.items():
+#             writer.writerow([key, value])
+# elif opt_args.results_format == "pkl":
+#     with open(model_dir, "wb") as f:
+#         pickle.dump(best_results_dict, f)
 
 
 
