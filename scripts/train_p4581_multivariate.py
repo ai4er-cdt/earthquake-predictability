@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from typing import List
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import torch
 
 import tyro
 from models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
@@ -30,6 +32,8 @@ from utils.plotting import (
 )
 
 ### ------ Parameters Definition ------ ###
+
+# FIXME: Not using the full signal only showing 0 - 700
 
 
 @dataclass
@@ -68,7 +72,7 @@ class ExperimentConfig:
 
     model: str = "LSTM"
     """model type to use"""
-    n_variates: int = 1
+    n_variates: int = 2
     """number of variates in the dataset (e.g., univariate or multivariate)."""
     hidden_size: int = 50
     """size of the hidden layers in the LSTM model."""
@@ -123,8 +127,11 @@ df_shear_stress = df["obs_shear_stress"]
 sample_rate = 1 / np.mean(np.diff(df["time"])) 
 print(f"Raw sample rate: {sample_rate}")
 
+# Create a new empty dataframe to store the smoothed data
+df_smoothed = pd.DataFrame()
+
 # Smooth and pre-process the data into windows
-df_smoothed = moving_average_causal_filter(
+df_smoothed["obs_shear_stress"] = moving_average_causal_filter(
     df_shear_stress, args.smoothing_window, args.downsampling_factor
 )
 
@@ -132,18 +139,52 @@ df_smoothed = moving_average_causal_filter(
 downsampled_sample_rate = sample_rate * (1 / args.downsampling_factor)
 print(f"Downsampled sample rate: {downsampled_sample_rate}")
 
+# Add another column to df_smoothed to store the secomd derivative
+df_smoothed["obs_shear_stress_derivative"] = df_smoothed["obs_shear_stress"].diff().diff()
+
+# Drop the first two rows as they will contain NaNs
+df_smoothed = df_smoothed.dropna()
+
+print(df_smoothed.head())
 
 # Visual sanity check: plot original vs. processed data
-plot_original_vs_processed_data(df_shear_stress, df_smoothed, plot_type="scatter")
+# plot_original_vs_processed_data(df_shear_stress, df_smoothed, plot_type="scatter")
 
 # Compare smoothed and original data statistics to ensure they are not 
 # statistically too different
-if not compare_feature_statistics(df_shear_stress, df_smoothed, significance_level=0.05):
+if not compare_feature_statistics(df_shear_stress, df_smoothed["obs_shear_stress"], significance_level=0.05):
     print("Feature statistics are too different, consider changing the smoothing window or downsampling factor")
     exit()  # Exit the script
 
+
+def create_multivariate_dataset(df, lookback, forecast):
+    """
+    Create a multivariate dataset from the input dataframe. Create an input 
+    tensor of the nb of columns in the dataframe.
+    """
+    # Number of variates in the dataset
+    n_variates = df.shape[1]
+
+    # Create a list to store the input and output windows
+    X, y = [], []
+
+    # we want a single uni-variate output y which is the obs_shear_stress
+    # Iterate through the dataframe to create the input and output windows
+    for i in range(len(df) - lookback - forecast):
+        X.append(df.values[i : i + lookback])
+        # As the y simply have the time series and not the second derivative
+        # we only need to append the obs_shear_stress
+        y.append(df["obs_shear_stress"].values[i + lookback : i + lookback + forecast])
+
+    # Convert the list to pytorch tensors
+    X = torch.tensor(X, dtype=torch.float32)
+    y = torch.tensor(y, dtype=torch.float32)
+
+    return X, y
+    
+
 # Break signal down into input (X) and output (y) windows
-X, y = create_dataset(df_smoothed, args.lookback, args.forecast)
+X, y = create_multivariate_dataset(df_smoothed, args.lookback, args.forecast)
 
 # Total number of samples
 n_samples = X.shape[0]
@@ -163,7 +204,7 @@ print(f"Number of samples in the test set: {n_test_samples}")
 
 # Normalise the dataset only once you have split it into train and test so that
 # the normalisation parameters are based only on the training set
-data_dict, scaler_X, scaler_y = normalise_dataset(
+data_dict, _, scaler_y = normalise_dataset(
     X_train, y_train, X_test, y_test
 )
 
