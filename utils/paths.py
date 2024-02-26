@@ -43,6 +43,9 @@ else:
     if "camilla" in username:
         # Define the main directory on Camilla's local machine for earthquake predictability
         MAIN_DIRECTORY = "/Users/camillagiuliabillari/Desktop/github-repositories/cambridge/earthquake-predictability"
+    if "tom" in username:
+        # Define the main directory on Tom's local machine for earthquake predictability
+        MAIN_DIRECTORY = "/home/tom-ratsakatika/VSCode/earthquake-predictability"
 
 GTC_DATA_DIR = f"{MAIN_DIRECTORY}/{REL_DATA_DIR}/gtc_quakes_data"
 
