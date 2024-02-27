@@ -1,0 +1,38 @@
+{
+    "cascadia": {
+        "smoothing_window": 60,
+        "downsampling_factor": 1
+    },
+    "p4679": {
+        "smoothing_window": 13,
+        "downsampling_factor": 13
+    },
+    "p4581": {
+        "smoothing_window": 26,
+        "downsampling_factor": 26
+    },
+    "b726": {
+        "smoothing_window": 1,
+        "downsampling_factor": 1
+    },
+    "b698": {
+        "smoothing_window": 2,
+        "downsampling_factor": 2
+    },
+    "i417": {
+        "smoothing_window": 2,
+        "downsampling_factor": 2
+    },
+    "sim_b726": {
+        "smoothing_window": 1,
+        "downsampling_factor": 1
+    },
+    "sim_b698": {
+        "smoothing_window": 2,
+        "downsampling_factor": 2
+    },
+    "Sim_i417": {
+        "smoothing_window": 2,
+        "downsampling_factor": 2
+    }
+}
