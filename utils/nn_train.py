@@ -166,7 +166,8 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
             # Training data evaluation
             y_train_pred = model(X_train_sc.unsqueeze(-1))
             y_train_pred_inv = torch.Tensor(scaler_y.inverse_transform(y_train_pred.cpu().detach().numpy()))
-            train_rmse = np.sqrt(loss_fn(y_train_pred_inv, data_dict["y_train"].to(device))).item()
+            # train_rmse = np.sqrt(loss_fn(y_train_pred_inv, data_dict["y_train"].to(device))).item()
+            train_rmse = np.sqrt(loss_fn(y_train_pred_inv.cpu(), data_dict["y_train"].cpu())).item()
             train_r2 = r2_score(data_dict["y_train"], y_train_pred_inv.cpu().detach().numpy())
             
             # Update lists and progress bar
@@ -177,7 +178,8 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
             if has_val:
                 y_val_pred = model(X_val_sc.unsqueeze(-1))
                 y_val_pred_inv = torch.Tensor(scaler_y.inverse_transform(y_val_pred.cpu().detach().numpy()))
-                val_rmse = np.sqrt(loss_fn(y_val_pred_inv, data_dict["y_val"].to(device))).item()
+                # val_rmse = np.sqrt(loss_fn(y_val_pred_inv, data_dict["y_val"].to(device))).item()
+                val_rmse = np.sqrt(loss_fn(y_val_pred_inv.cpu(), data_dict["y_val"].cpu())).item()
                 val_r2 = r2_score(data_dict["y_val"], y_val_pred_inv.cpu().detach().numpy())
 
                 # Update lists and progress bar
@@ -187,7 +189,8 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
             else: # Testing data evaluation
                 y_test_pred = model(X_test_sc.unsqueeze(-1))
                 y_test_pred_inv = torch.Tensor(scaler_y.inverse_transform(y_test_pred.cpu().detach().numpy()))
-                test_rmse = np.sqrt(loss_fn(y_test_pred_inv, data_dict["y_test"].to(device))).item()
+                # test_rmse = np.sqrt(loss_fn(y_test_pred_inv, data_dict["y_test"].to(device))).item()
+                test_rmse = np.sqrt(loss_fn(y_test_pred_inv.cpu(), data_dict["y_test"].cpu())).item()
                 test_r2 = r2_score(data_dict["y_test"], y_test_pred_inv.cpu().detach().numpy())
 
                 # Update lists and progress bar
@@ -253,7 +256,8 @@ def eval_model_on_test_set(model, results_dict, data_dict, scaler_y, device):
 
     # Calculate RMSE and R^2
     y_test_pred_inv = torch.Tensor(scaler_y.inverse_transform(y_test_pred.cpu().detach().numpy()))
-    test_rmse = np.sqrt(loss_fn(y_test_pred_inv, data_dict["y_test"].to(device))).item()
+    # test_rmse = np.sqrt(loss_fn(y_test_pred_inv, data_dict["y_test"].to(device))).item()
+    test_rmse = np.sqrt(loss_fn(y_test_pred_inv.cpu(), data_dict["y_test"].cpu())).item()
     test_r2 = r2_score(data_dict["y_test"], y_test_pred_inv.cpu().detach().numpy())
 
     # Compile results

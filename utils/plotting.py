@@ -71,10 +71,13 @@ def plot_example_sample(X, y, select_window, lookback, forecast, plot_type="scat
         plot_type (str, optional): Determines the type of plot to create ('scatter' or 'line'). Defaults to "scatter".
         save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
     """
-    plt.figure(figsize=(15, 5))
+    plt.figure(figsize=(15, 3))
 
     # Determine the plotting function based on the plot type
-    plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
+    if plot_type == "scatter":
+        plot_fn = lambda x, y, label: plt.scatter(x, y, label=label, s=5)  # Adjust s for smaller dots
+    else:
+        plot_fn = plt.plot
 
     # Plot the lookback data
     plot_fn(range(lookback), X[select_window], label="Lookback")
@@ -85,8 +88,8 @@ def plot_example_sample(X, y, select_window, lookback, forecast, plot_type="scat
         label="Forecast",
     )
     plt.title("Lookback and forecast of the sample")
-    plt.xlabel("Time (days)")
-    plt.ylabel("Displacement potency (?)")
+    plt.xlabel("Time steps")
+    plt.ylabel("Signal")
     plt.legend()
 
     # Display the plot
