@@ -121,10 +121,14 @@ df_smoothed = moving_average_causal_filter(
 # Visual sanity check: plot original vs. processed data
 # plot_original_vs_processed_data(df_shear_stress, df_smoothed, plot_type="line")
 
-# Compare smoothed and original data statistics to ensure they are not 
+# Compare smoothed and original data statistics to ensure they are not
 # statistically too different
-if not compare_feature_statistics(df_shear_stress, df_smoothed, significance_level=0.05):
-    print("Feature statistics are too different, consider changing the smoothing window or downsampling factor")
+if not compare_feature_statistics(
+    df_shear_stress, df_smoothed, significance_level=0.05
+):
+    print(
+        "Feature statistics are too different, consider changing the smoothing window or downsampling factor"
+    )
     exit()  # Exit the script
 
 # Break signal down into input (X) and output (y) windows

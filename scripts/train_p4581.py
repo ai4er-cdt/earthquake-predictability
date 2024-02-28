@@ -2,9 +2,9 @@
 
 from dataclasses import dataclass
 from typing import List
-import numpy as np
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import numpy as np
 import tyro
 from models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
 from models.tcn_oneshot_multistep import MultiStepTCN
@@ -24,9 +24,9 @@ from utils.nn_train import train_model
 from utils.plotting import (
     PLOTS_DIRECTORY,
     plot_all_data_results,
+    plot_example_sample,
     plot_metric_results,
     plot_original_vs_processed_data,
-    plot_example_sample,
 )
 
 ### ------ Parameters Definition ------ ###
@@ -120,7 +120,7 @@ df = SlowEarthquakeDataset.convert_to_df(dataset, args.exp)
 df_shear_stress = df["obs_shear_stress"]
 
 # Print sample rate from df['time']
-sample_rate = 1 / np.mean(np.diff(df["time"])) 
+sample_rate = 1 / np.mean(np.diff(df["time"]))
 print(f"Raw sample rate: {sample_rate}")
 
 # Smooth and pre-process the data into windows
@@ -134,12 +134,18 @@ print(f"Downsampled sample rate: {downsampled_sample_rate}")
 
 
 # Visual sanity check: plot original vs. processed data
-plot_original_vs_processed_data(df_shear_stress, df_smoothed, plot_type="scatter")
+plot_original_vs_processed_data(
+    df_shear_stress, df_smoothed, plot_type="scatter"
+)
 
-# Compare smoothed and original data statistics to ensure they are not 
+# Compare smoothed and original data statistics to ensure they are not
 # statistically too different
-if not compare_feature_statistics(df_shear_stress, df_smoothed, significance_level=0.05):
-    print("Feature statistics are too different, consider changing the smoothing window or downsampling factor")
+if not compare_feature_statistics(
+    df_shear_stress, df_smoothed, significance_level=0.05
+):
+    print(
+        "Feature statistics are too different, consider changing the smoothing window or downsampling factor"
+    )
     exit()  # Exit the script
 
 # Break signal down into input (X) and output (y) windows
