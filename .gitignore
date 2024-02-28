@@ -184,3 +184,6 @@ results_local/
 *.tmp
 
 *.png
+notebooks/Cascadia pre-trained.pt
+notebooks/Cascadia.pt
+notebooks/p4679.pt

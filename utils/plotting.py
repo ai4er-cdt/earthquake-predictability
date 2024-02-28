@@ -10,8 +10,13 @@ from utils.paths import PLOTS_DIR, username
 #         Functions for plotting dataset            #
 ### --------------------------------------------- ###
 
+
 def plot_original_vs_processed_data(
-    original_df, processed_df, plot_type="scatter", processing_label="Smoothed", save_plot=False
+    original_df,
+    processed_df,
+    plot_type="scatter",
+    processing_label="Smoothed",
+    save_plot=False,
 ):
     """
     Plots relevant features in the original and processed datasets.
@@ -30,7 +35,6 @@ def plot_original_vs_processed_data(
     # Determine the plotting function based on the plot type
     plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
 
-
     # Plot original data in the first subplot
     plt.subplot(1, 2, 1)
     plot_fn(range(len(original_df)), original_df, label="Original Data")
@@ -38,11 +42,7 @@ def plot_original_vs_processed_data(
 
     # Plot processed data in the second subplot
     plt.subplot(1, 2, 2)
-    plot_fn(
-        range(len(processed_df)),
-        processed_df,
-        label="Processed Data"
-    )
+    plot_fn(range(len(processed_df)), processed_df, label="Processed Data")
     plt.title(f"{processing_label} Data")
     plt.tight_layout()
 
@@ -50,7 +50,7 @@ def plot_original_vs_processed_data(
     plt.show()
 
     # Save the plot if specified
-    if save_plot:   
+    if save_plot:
         current_time = datetime.now().isoformat(timespec="seconds")
         plt.savefig(
             f"{PLOTS_DIR}/{username}_{current_time}_og_vs_proc.png",
@@ -58,7 +58,15 @@ def plot_original_vs_processed_data(
         )
 
 
-def plot_example_sample(X, y, select_window, lookback, forecast, plot_type="scatter", save_plot=False):
+def plot_example_sample(
+    X,
+    y,
+    select_window,
+    lookback,
+    forecast,
+    plot_type="scatter",
+    save_plot=False,
+):
     """
     Plots an example of input and target data to visualize the lookback and forecast periods.
 
@@ -73,9 +81,13 @@ def plot_example_sample(X, y, select_window, lookback, forecast, plot_type="scat
     """
     plt.figure(figsize=(15, 3))
 
+    def plot_scatter(x, y, label):
+        plt.scatter(x, y, label=label, s=5)  # Adjust s for smaller dots
+
     # Determine the plotting function based on the plot type
     if plot_type == "scatter":
-        plot_fn = lambda x, y, label: plt.scatter(x, y, label=label, s=5)  # Adjust s for smaller dots
+        plot_fn = plot_scatter
+
     else:
         plot_fn = plt.plot
 
@@ -108,17 +120,18 @@ def plot_example_sample(X, y, select_window, lookback, forecast, plot_type="scat
 #        Functions for plotting model results       #
 ### --------------------------------------------- ###
 
+
 def plot_single_seg_result(
-        data_dict,
-        results_dict,
-        lookback,
-        forecast,
-        chosen_seg,
-        title,
-        x_label,
-        y_label,
-        plot_type = "scatter",
-        save_plot=False
+    data_dict,
+    results_dict,
+    lookback,
+    forecast,
+    chosen_seg,
+    title,
+    x_label,
+    y_label,
+    plot_type="scatter",
+    save_plot=False,
 ):
     """
     Plot the true values and testing prediction for a single segment of time series data.
@@ -147,7 +160,9 @@ def plot_single_seg_result(
     i_seg_lb = i_seg * (forecast + lookback)  # Adjusted index for plotting
 
     # Combined true value data
-    combined_true = np.concatenate((data_dict["y_train"][:, 0], data_dict["y_test"][:, 0]))
+    combined_true = np.concatenate(
+        (data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])
+    )
 
     # Training set predictions
     train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
@@ -162,7 +177,13 @@ def plot_single_seg_result(
 
     if has_val:
         # Combined true value data updated with validation set
-        combined_true = np.concatenate((data_dict["y_train"][:, 0], data_dict["y_val"][:, 0], data_dict["y_test"][:, 0]))
+        combined_true = np.concatenate(
+            (
+                data_dict["y_train"][:, 0],
+                data_dict["y_val"][:, 0],
+                data_dict["y_test"][:, 0],
+            )
+        )
 
         # Validation set predictions
         val_outputs = results_dict["y_val_pred"].cpu().detach().numpy()
@@ -178,34 +199,33 @@ def plot_single_seg_result(
         [test_outputs[idx] for idx in range(0, len(test_outputs), forecast)]
     ).reshape(-1, 1)
 
-    # Combine training and testing predictions for plotting (and val if present) 
+    # Combine training and testing predictions for plotting (and val if present)
     combined_plot = np.concatenate((train_plot, val_plot, test_plot))
 
     # Plot true lookback values for the segment
     plot_fn(
         np.arange(seg_size) + i_seg_lb,
-        combined_true[i_seg:i_seg + seg_size],
+        combined_true[i_seg : i_seg + seg_size],
         label="True lookback values",
     )
-    
+
     # Plot true values for the forecast period
     plot_fn(
         np.arange(forecast) + (i_seg_lb + seg_size),
-        combined_true[i_seg + seg_size:i_seg + seg_size + forecast],
+        combined_true[i_seg + seg_size : i_seg + seg_size + forecast],
         label="True forecast values",
     )
-    
+
     # Plot prediction for the forecast period
     plot_fn(
         np.arange(forecast) + (i_seg_lb + seg_size),
-        combined_plot[i_seg + seg_size:i_seg + seg_size + forecast],
+        combined_plot[i_seg + seg_size : i_seg + seg_size + forecast],
         label="Predicted values",
     )
 
-
     # Vertical line indicating the start of the test set
     plt.axvline(
-        x=(i_seg_lb+seg_size),
+        x=(i_seg_lb + seg_size),
         color="gray",
         linestyle="--",
         label="New forecast window",
@@ -238,8 +258,8 @@ def plot_all_data_results(
     x_label,
     y_label,
     zoom_window,
-    plot_type = "line",
-    save_plot=False
+    plot_type="line",
+    save_plot=False,
 ):
     """
     Plot true values, training predictions, and testing predictions for time series data.
@@ -263,7 +283,9 @@ def plot_all_data_results(
     plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
 
     # Combined true value data
-    combined_true = np.concatenate((data_dict["y_train"][:, 0], data_dict["y_test"][:, 0]))
+    combined_true = np.concatenate(
+        (data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])
+    )
 
     # Training set predictions
     train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
@@ -281,7 +303,13 @@ def plot_all_data_results(
 
     if has_val:
         # Combined true value data updated with validation set
-        combined_true = np.concatenate((data_dict["y_train"][:, 0], data_dict["y_val"][:, 0], data_dict["y_test"][:, 0]))
+        combined_true = np.concatenate(
+            (
+                data_dict["y_train"][:, 0],
+                data_dict["y_val"][:, 0],
+                data_dict["y_test"][:, 0],
+            )
+        )
 
         # Validation set predictions
         val_outputs = results_dict["y_val_pred"].cpu().detach().numpy()
@@ -298,7 +326,10 @@ def plot_all_data_results(
     ).reshape(-1, 1)
 
     # Combine training and testing data for plotting
-    combined_plot = np.concatenate((train_plot, val_plot, test_plot))
+    if has_val:
+        combined_plot = np.concatenate((train_plot, val_plot, test_plot))
+    else:
+        combined_plot = np.concatenate((train_plot, test_plot))
 
     # Plot true values
     plot_fn(
@@ -306,7 +337,7 @@ def plot_all_data_results(
         combined_true,
         label="True values",
     )
-    
+
     # Plot training predictions
     plot_fn(
         range(lookback, lookback + len(train_plot)),
@@ -318,14 +349,20 @@ def plot_all_data_results(
     if has_val:
         # Plot validation predictions
         plot_fn(
-            range(lookback + len(train_plot), lookback + len(val_plot) + len(train_plot)),
+            range(
+                lookback + len(train_plot),
+                lookback + len(val_plot) + len(train_plot),
+            ),
             val_plot,
             label="Validation prediction",
         )
 
     # Plot testing predictions
     plot_fn(
-        range(lookback + len(train_plot) + len(val_plot), lookback + len(combined_plot)),
+        range(
+            lookback + len(train_plot) + len(val_plot),
+            lookback + len(combined_plot),
+        ),
         test_plot,
         label="Testing prediction",
     )
@@ -339,36 +376,35 @@ def plot_all_data_results(
         )
         # Plot vertical axis to indicate start of first val/test forecast window
         plt.axvline(
-            x=end_of_train_index+lookback,
+            x=end_of_train_index + lookback,
             color="gray",
             linestyle="--",
             label="New forecast window",
         )
-    
+
     # If val_plot=0, the below will plot on the above
     # Plot vertical axis to indicate start of test data
     plt.axvline(
-        x=end_of_train_index+len(val_plot),
+        x=end_of_train_index + len(val_plot),
         color="black",
         label="Test set start",
     )
     # Plot vertical axis to indicate start of first test forecast window
     plt.axvline(
-        x=end_of_train_index+lookback+len(val_plot),
+        x=end_of_train_index + lookback + len(val_plot),
         color="black",
         linestyle="--",
         label="New forecast window",
-        )
+    )
 
     # If a zoom range is provided
     if len(zoom_window) > 0:
-
         # Add vertical lines to indicate forecast window starts
-        n_val_test_windows = int((len(val_plot)+len(test_plot))/forecast)
+        n_val_test_windows = int((len(val_plot) + len(test_plot)) / forecast)
         for i in range(n_val_test_windows):
             x = end_of_train_index + i * forecast
             plt.axvline(x=x, color="grey", linestyle="--")
-        
+
         # Zoom into the specified range
         plt.xlim(zoom_window[0], zoom_window[1])
 
@@ -391,7 +427,12 @@ def plot_all_data_results(
 
 
 def plot_metric_results(
-    n_epochs, train_metric_list, val_or_test_metric_list, metric_label, val_or_test="Test", save_plot=False
+    n_epochs,
+    train_metric_list,
+    val_or_test_metric_list,
+    metric_label,
+    val_or_test="Test",
+    save_plot=False,
 ):
     """
     Plot a metric over epochs for training, testing, and optionally validation sets.
@@ -407,10 +448,18 @@ def plot_metric_results(
     plt.figure(figsize=(10, 6))
 
     # Plot training set metrics over epochs
-    plt.plot(range(1, n_epochs + 1), train_metric_list, label=f"Train {metric_label}")
-    
+    plt.plot(
+        range(1, n_epochs + 1),
+        train_metric_list,
+        label=f"Train {metric_label}",
+    )
+
     # Plot validation or test set metrics over epochs
-    plt.plot(range(1, n_epochs + 1), val_or_test_metric_list, label=f"{val_or_test} {metric_label}")
+    plt.plot(
+        range(1, n_epochs + 1),
+        val_or_test_metric_list,
+        label=f"{val_or_test} {metric_label}",
+    )
 
     # Setting plot labels and title
     plt.xlabel("Epochs")
@@ -419,7 +468,7 @@ def plot_metric_results(
     plt.legend(loc="best")
 
     plt.show()
-    
+
     # Optionally save the plot
     if save_plot:
         current_time = datetime.now().isoformat(timespec="seconds")
