@@ -31,7 +31,7 @@
         "smoothing_window": 2,
         "downsampling_factor": 2
     },
-    "Sim_i417": {
+    "sim_i417": {
         "smoothing_window": 2,
         "downsampling_factor": 2
     }
