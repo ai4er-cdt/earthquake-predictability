@@ -1,6 +1,6 @@
 {
     "cascadia": {
-        "smoothing_window": 60,
+        "smoothing_window": 10,
         "downsampling_factor": 1
     },
     "p4679": {
