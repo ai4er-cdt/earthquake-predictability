@@ -258,6 +258,7 @@ def plot_all_data_results(
     x_label,
     y_label,
     zoom_window,
+    ith_segment=None,
     plot_type="line",
     save_plot=False,
 ):
@@ -273,8 +274,9 @@ def plot_all_data_results(
         title (str): Plot title.
         x_label (str): Label for the x-axis.
         y_label (str): Label for the y-axis.
-        plot_type (str): Type of plot. Options: "scatter" or "line". Defaults to "line".
         zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
+        ith_segment (int): Plots only the ith segment. Defaults to None.
+        plot_type (str): Type of plot. Options: "scatter" or "line". Defaults to "line".
         save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
     """
     plt.figure(figsize=(25, 6))
@@ -283,12 +285,28 @@ def plot_all_data_results(
     plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
 
     # Combined true value data
-    combined_true = np.concatenate(
-        (data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])
-    )
+    if ith_segment is not None:
+        combined_true = np.concatenate(
+            (
+                data_dict["y_train"][:, 0, ith_segment],
+                data_dict["y_test"][:, 0, ith_segment],
+            )
+        )
+    else:
+        combined_true = np.concatenate(
+            (data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])
+        )
 
     # Training set predictions
-    train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
+    if ith_segment is not None:
+        train_outputs = (
+            results_dict["y_train_pred"][:, :, ith_segment]
+            .cpu()
+            .detach()
+            .numpy()
+        )
+    else:
+        train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
     # Extract every 'forecast' time step for plotting
     train_plot = np.array(
         [train_outputs[idx] for idx in range(0, len(train_outputs), forecast)]
@@ -302,24 +320,48 @@ def plot_all_data_results(
     val_plot = []
 
     if has_val:
-        # Combined true value data updated with validation set
-        combined_true = np.concatenate(
-            (
-                data_dict["y_train"][:, 0],
-                data_dict["y_val"][:, 0],
-                data_dict["y_test"][:, 0],
+        if ith_segment is not None:
+            # Combined true value data updated with validation set
+            combined_true = np.concatenate(
+                (
+                    data_dict["y_train"][:, 0, ith_segment],
+                    data_dict["y_val"][:, 0, ith_segment],
+                    data_dict["y_test"][:, 0, ith_segment],
+                )
             )
-        )
-
-        # Validation set predictions
-        val_outputs = results_dict["y_val_pred"].cpu().detach().numpy()
+            # Validation set predictions
+            val_outputs = (
+                results_dict["y_val_pred"][:, :, ith_segment]
+                .cpu()
+                .detach()
+                .numpy()
+            )
+        else:
+            # Combined true value data updated with validation set
+            combined_true = np.concatenate(
+                (
+                    data_dict["y_train"][:, 0],
+                    data_dict["y_val"][:, 0],
+                    data_dict["y_test"][:, 0],
+                )
+            )
+            # Validation set predictions
+            val_outputs = results_dict["y_val_pred"].cpu().detach().numpy()
         # Extract every 'forecast' time step for plotting
         val_plot = np.array(
             [val_outputs[idx] for idx in range(0, len(val_outputs), forecast)]
         ).reshape(-1, 1)
 
     # Testing set predictions
-    test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
+    if ith_segment is not None:
+        test_outputs = (
+            results_dict["y_test_pred"][:, :, ith_segment]
+            .cpu()
+            .detach()
+            .numpy()
+        )
+    else:
+        test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
     # Extract every 'forecast' time step for plotting
     test_plot = np.array(
         [test_outputs[idx] for idx in range(0, len(test_outputs), forecast)]
@@ -401,8 +443,8 @@ def plot_all_data_results(
     if len(zoom_window) > 0:
         # Add vertical lines to indicate forecast window starts
         n_val_test_windows = int((len(val_plot) + len(test_plot)) / forecast)
-        for i in range(n_val_test_windows):
-            x = end_of_train_index + i * forecast
+        for i in range(n_val_test_windows + 1):
+            x = end_of_train_index + lookback + i * forecast
             plt.axvline(x=x, color="grey", linestyle="--")
 
         # Zoom into the specified range

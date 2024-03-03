@@ -6,7 +6,6 @@ import torch.utils.data as data
 import tqdm
 from sklearn.metrics import r2_score
 
-
 # def train_model(model, n_epochs, data_dict, scaler_y, device):
 #     """
 #     Train a model for time series forecasting.
@@ -103,7 +102,6 @@ from sklearn.metrics import r2_score
 #     return results_dict
 
 
-
 def train_model(model, n_epochs, data_dict, scaler_y, device):
     """
     Train a model for time series forecasting, optionally using a validation set.
@@ -146,14 +144,16 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
     loss_fn = nn.MSELoss()
 
     # DataLoader for training data
-    loader = data.DataLoader(data.TensorDataset(X_train_sc, y_train_sc), shuffle=True, batch_size=32)
+    loader = data.DataLoader(
+        data.TensorDataset(X_train_sc, y_train_sc), shuffle=True, batch_size=32
+    )
 
     # Training loop
     pbar = tqdm.tqdm(range(n_epochs))
     for epoch in pbar:
         model.train()
         for X_batch, y_batch in loader:
-            y_pred = model(X_batch.unsqueeze(-1))
+            y_pred = model(X_batch.unsqueeze(1))
             loss = loss_fn(y_pred, y_batch)
 
             optimizer.zero_grad()
@@ -164,39 +164,72 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
         model.eval()
         with torch.no_grad():
             # Training data evaluation
-            y_train_pred = model(X_train_sc.unsqueeze(-1))
-            y_train_pred_inv = torch.Tensor(scaler_y.inverse_transform(y_train_pred.cpu().detach().numpy()))
+            y_train_pred = model(X_train_sc.unsqueeze(1))
+            y_train_pred_inv = torch.Tensor(
+                scaler_y.inverse_transform(
+                    y_train_pred.cpu().reshape(-1, 1).detach().numpy()
+                )
+            )
+            y_train_pred_inv = y_train_pred_inv.reshape(
+                *data_dict["y_train"].shape
+            )
             # train_rmse = np.sqrt(loss_fn(y_train_pred_inv, data_dict["y_train"].to(device))).item()
-            train_rmse = np.sqrt(loss_fn(y_train_pred_inv.cpu(), data_dict["y_train"].cpu())).item()
-            train_r2 = r2_score(data_dict["y_train"], y_train_pred_inv.cpu().detach().numpy())
-            
+            train_rmse = np.sqrt(
+                loss_fn(y_train_pred_inv.cpu(), data_dict["y_train"].cpu())
+            ).item()
+            train_r2 = r2_score(
+                data_dict["y_train"].reshape(-1, 1),
+                y_train_pred_inv.cpu().reshape(-1, 1).detach().numpy(),
+            )
+
             # Update lists and progress bar
             train_rmse_list.append(train_rmse)
             train_r2_list.append(train_r2)
 
             # Validation data evaluation (if available)
             if has_val:
-                y_val_pred = model(X_val_sc.unsqueeze(-1))
-                y_val_pred_inv = torch.Tensor(scaler_y.inverse_transform(y_val_pred.cpu().detach().numpy()))
-                # val_rmse = np.sqrt(loss_fn(y_val_pred_inv, data_dict["y_val"].to(device))).item()
-                val_rmse = np.sqrt(loss_fn(y_val_pred_inv.cpu(), data_dict["y_val"].cpu())).item()
-                val_r2 = r2_score(data_dict["y_val"], y_val_pred_inv.cpu().detach().numpy())
+                y_val_pred = model(X_val_sc.unsqueeze(1))
+                y_val_pred_inv = torch.Tensor(
+                    scaler_y.inverse_transform(
+                        y_val_pred.cpu().reshape(-1, 1).detach().numpy()
+                    )
+                )
+                y_val_pred_inv = y_val_pred_inv.reshape(
+                    *data_dict["y_val"].shape
+                )
+                val_rmse = np.sqrt(
+                    loss_fn(y_val_pred_inv.cpu(), data_dict["y_val"].cpu())
+                ).item()
+                val_r2 = r2_score(
+                    data_dict["y_val"].reshape(-1, 1),
+                    y_val_pred_inv.cpu().reshape(-1, 1).detach().numpy(),
+                )
 
                 # Update lists and progress bar
                 val_rmse_list.append(val_rmse)
                 val_r2_list.append(val_r2)
-            
-            else: # Testing data evaluation
-                y_test_pred = model(X_test_sc.unsqueeze(-1))
-                y_test_pred_inv = torch.Tensor(scaler_y.inverse_transform(y_test_pred.cpu().detach().numpy()))
-                # test_rmse = np.sqrt(loss_fn(y_test_pred_inv, data_dict["y_test"].to(device))).item()
-                test_rmse = np.sqrt(loss_fn(y_test_pred_inv.cpu(), data_dict["y_test"].cpu())).item()
-                test_r2 = r2_score(data_dict["y_test"], y_test_pred_inv.cpu().detach().numpy())
+
+            else:  # Testing data evaluation
+                y_test_pred = model(X_test_sc.unsqueeze(1))
+                y_test_pred_inv = torch.Tensor(
+                    scaler_y.inverse_transform(
+                        y_test_pred.cpu().reshape(-1, 1).detach().numpy()
+                    )
+                )
+                y_test_pred_inv = y_test_pred_inv.reshape(
+                    *data_dict["y_test"].shape
+                )
+                test_rmse = np.sqrt(
+                    loss_fn(y_test_pred_inv.cpu(), data_dict["y_test"].cpu())
+                ).item()
+                test_r2 = r2_score(
+                    data_dict["y_test"].reshape(-1, 1),
+                    y_test_pred_inv.cpu().reshape(-1, 1).detach().numpy(),
+                )
 
                 # Update lists and progress bar
                 test_rmse_list.append(test_rmse)
                 test_r2_list.append(test_r2)
-
 
         if has_val:
             pbar_desc = f"Epoch [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Val RMSE: {val_rmse:.4f}"
@@ -214,21 +247,27 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
 
     # Add val results
     if has_val:
-        results_dict.update({
-            "y_val_pred": y_val_pred_inv.cpu(),
-            "val_rmse_list": val_rmse_list,
-            "val_r2_list": val_r2_list,
-        })
-    else: # Add test results
-        results_dict.update({
-            "y_test_pred": y_test_pred_inv.cpu(),
-            "test_rmse_list": test_rmse_list,
-            "test_r2_list": test_r2_list,
-        })
+        results_dict.update(
+            {
+                "y_val_pred": y_val_pred_inv.cpu(),
+                "val_rmse_list": val_rmse_list,
+                "val_r2_list": val_r2_list,
+            }
+        )
+    else:  # Add test results
+        results_dict.update(
+            {
+                "y_test_pred": y_test_pred_inv.cpu(),
+                "test_rmse_list": test_rmse_list,
+                "test_r2_list": test_r2_list,
+            }
+        )
 
     return results_dict
 
-# TODO: Test the below!!!
+
+# TODO: Test the below!!!
+
 
 def eval_model_on_test_set(model, results_dict, data_dict, scaler_y, device):
     """
@@ -255,15 +294,23 @@ def eval_model_on_test_set(model, results_dict, data_dict, scaler_y, device):
     loss_fn = nn.MSELoss()
 
     # Calculate RMSE and R^2
-    y_test_pred_inv = torch.Tensor(scaler_y.inverse_transform(y_test_pred.cpu().detach().numpy()))
+    y_test_pred_inv = torch.Tensor(
+        scaler_y.inverse_transform(y_test_pred.cpu().detach().numpy())
+    )
     # test_rmse = np.sqrt(loss_fn(y_test_pred_inv, data_dict["y_test"].to(device))).item()
-    test_rmse = np.sqrt(loss_fn(y_test_pred_inv.cpu(), data_dict["y_test"].cpu())).item()
-    test_r2 = r2_score(data_dict["y_test"], y_test_pred_inv.cpu().detach().numpy())
+    test_rmse = np.sqrt(
+        loss_fn(y_test_pred_inv.cpu(), data_dict["y_test"].cpu())
+    ).item()
+    test_r2 = r2_score(
+        data_dict["y_test"], y_test_pred_inv.cpu().detach().numpy()
+    )
 
     # Compile results
-    results_dict.update({
+    results_dict.update(
+        {
             "y_test_pred": y_test_pred_inv.cpu(),
             "test_rmse_list": test_rmse,
             "test_r2_list": test_r2,
-        })
+        }
+    )
     return results_dict
