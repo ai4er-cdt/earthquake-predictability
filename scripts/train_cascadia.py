@@ -57,11 +57,11 @@ class ExperimentConfig:
 
     # Preprocessing config options
 
-    smoothing_window: int = 5
+    smoothing_window: int = 60
     """moving average window size for data smoothing."""
     downsampling_factor: int = 1
     """factor by which to downsample the data."""
-    lookback: int = 90
+    lookback: int = 180
     """number of past observations to consider for forecasting."""
     forecast: int = 30
     """number of future observations to forecast."""

@@ -51,22 +51,24 @@ def objective(trial):
     # Different hyperparameter suggestion logic based on model type
     if opt_args.model == "TCN":
         # Define and suggest hyperparameters for TCN model - NOTE: For now these are just examples to try get optuna running!!
+        lookback = trial.suggest_int('lookback', 180, 600)
         n_layers = trial.suggest_int('n_layers', 1, 4)
         hidden_size = trial.suggest_categorical('hidden_size', [16, 32, 64, 128])
         kernel_size = trial.suggest_int('kernel_size', 2, 8)
         dropout = trial.suggest_float('dropout', 0.1, 0.5)
 
         # Train the model with suggested hyperparameters
-        cmd = f"python {MAIN_DIRECTORY}/scripts/train_cascadia.py --optuna --optuna_id {optuna_id} --model {opt_args.model} --hidden_size {hidden_size} --n_layers {n_layers} --kernel_size {kernel_size} --dropout {dropout}"
+        cmd = f"python {MAIN_DIRECTORY}/scripts/train_cascadia.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --n_layers {n_layers} --kernel_size {kernel_size} --dropout {dropout}"
         subprocess.run(cmd.split())
 
     elif opt_args.model == "LSTM":
         # Define and suggest hyperparameters for LSTM model - NOTE: For now these are just examples to try get optuna running!!
+        lookback = trial.suggest_int('lookback', 180, 600)
         hidden_size = trial.suggest_int("hidden_size", 20, 200)
         n_layers = trial.suggest_int("n_layers", 1, 3)
 
         # Construct command to run the model training script with the suggested parameters
-        cmd = f"python {MAIN_DIRECTORY}/scripts/train_cascadia.py --optuna --optuna_id {optuna_id} --model {opt_args.model} --hidden_size {hidden_size} --n_layers {n_layers}"
+        cmd = f"python {MAIN_DIRECTORY}/scripts/train_cascadia.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --n_layers {n_layers}"
         subprocess.run(cmd.split()) # Execute the command
     
     # Wait for the training script to generate results
@@ -78,8 +80,11 @@ def objective(trial):
     with open(results_path, 'rb') as f:
         results_dict = pickle.load(f)
     
+    # Check for validation set
+    has_val = 'val_rmse_list' in results_dict
+
     # Use the final test RMSE as the objective to minimize
-    final_test_rmse = results_dict['test_rmse_list'][-1]
+    final_test_rmse = results_dict[f"{'val' if has_val else 'test'}_rmse_list"][-1]
 
     return final_test_rmse
 
@@ -118,22 +123,22 @@ best_results_dict = run_optuna_optimization()
 # NOTE: The below is not tested yet!
 
 
-# # Construct filename with user, model type, and current time for uniqueness
-# optuna_results_dir = f"{MAIN_DIRECTORY}/scripts/optuna_results"
-# current_time = datetime.now().isoformat(timespec="seconds")
-# base_filename = f"{username}_best_{opt_args.model}_{current_time}.{opt_args.results_format}"
-# model_dir = os.path.join(optuna_results_dir, base_filename)
+# Construct filename with user, model type, and current time for uniqueness
+optuna_results_dir = f"{MAIN_DIRECTORY}/scripts/cascadia/optuna_results"
+current_time = datetime.now().isoformat(timespec="seconds")
+base_filename = f"{username}_best_{opt_args.model}_{current_time}.{opt_args.results_format}"
+model_dir = os.path.join(optuna_results_dir, base_filename)
 
-# # Save the best hyperparameters to a file
-# if opt_args.results_format == "csv":
-#     # Save the best hyperparameters to a CSV file
-#     with open(model_dir, "w") as f:
-#         writer = csv.writer(f)
-#         for key, value in best_results_dict.items():
-#             writer.writerow([key, value])
-# elif opt_args.results_format == "pkl":
-#     with open(model_dir, "wb") as f:
-#         pickle.dump(best_results_dict, f)
+# Save the best hyperparameters to a file
+if opt_args.results_format == "csv":
+    # Save the best hyperparameters to a CSV file
+    with open(model_dir, "w") as f:
+        writer = csv.writer(f)
+        for key, value in best_results_dict.items():
+            writer.writerow([key, value])
+elif opt_args.results_format == "pkl":
+    with open(model_dir, "wb") as f:
+        pickle.dump(best_results_dict, f)
 
 
 
