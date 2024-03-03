@@ -6,101 +6,6 @@ import torch.utils.data as data
 import tqdm
 from sklearn.metrics import r2_score
 
-# def train_model(model, n_epochs, data_dict, scaler_y, device):
-#     """
-#     Train a model for time series forecasting.
-
-#     Parameters:
-#         - model (nn.Module): model to be trained.
-#         - n_epochs (int): Number of training epochs.
-#         - data_dict (dict): Dictionary containing training and testing data arrays.
-#         - scaler_y: Scaler for the target variable.
-
-#     Returns:
-#         - dict: Dictionary containing the training and testing predictions,
-#               as well as lists of training and testing RMSE and R2 values.
-#     """
-
-#     # Declare training device
-#     print(f"Training model on {device}")
-
-#     # Move model and training and testing data to the specified device (cuda or cpu)
-#     model = model.to(device)
-#     X_train_sc = data_dict["X_train_sc"].to(device)
-#     y_train_sc = data_dict["y_train_sc"].to(device)
-#     X_test_sc = data_dict["X_test_sc"].to(device)
-#     # y_test_sc = data_dict["y_test_sc"].to(device)
-
-#     # Define Adam optimizer and Mean Squared Error (MSE) loss function
-#     optimizer = optim.Adam(model.parameters())
-#     loss_fn = nn.MSELoss()
-
-#     # Create a DataLoader for training batches
-#     loader = data.DataLoader(
-#         data.TensorDataset(X_train_sc, y_train_sc), shuffle=True, batch_size=32
-#     )
-
-#     # Lists to store RMSE values for plotting
-#     train_rmse_list = []; test_rmse_list = []
-#     train_r2_list = []; test_r2_list = []
-
-#     # Progress bar length
-#     pbar = tqdm.tqdm(range(n_epochs))
-
-#     # Training loop
-#     for epoch in pbar:
-#         model.train()
-
-#         # Iterate through batches in the DataLoader
-#         for X_batch, y_batch in loader:
-#             # Reshape input for univariate (add a dimension) and model
-#             y_pred = model(X_batch.unsqueeze(-1))
-#             loss = loss_fn(y_pred, y_batch)
-
-#             # Backward pass and optimization step
-#             optimizer.zero_grad()
-#             loss.backward()
-#             optimizer.step()
-
-#         model.eval()
-
-#         with torch.no_grad():  # do not consider gradient in evaluating - no backprop
-#             # Evaluate model on training data
-#             y_train_pred = model(X_train_sc.unsqueeze(-1))
-#             y_train_pred = torch.Tensor(
-#                 scaler_y.inverse_transform(y_train_pred.cpu())
-#             )
-#             train_rmse = np.sqrt(loss_fn(y_train_pred, data_dict["y_train"]))
-#             train_rmse_list.append(train_rmse.item())
-#             train_r2 = r2_score(data_dict["y_train"], y_train_pred)
-#             train_r2_list.append(train_r2.item())
-
-#             # Evaluate model on testing data
-#             y_test_pred = model(X_test_sc.unsqueeze(-1))
-#             y_test_pred = torch.Tensor(
-#                 scaler_y.inverse_transform(y_test_pred.cpu())
-#             )
-#             test_rmse = np.sqrt(loss_fn(y_test_pred, data_dict["y_test"]))
-#             test_rmse_list.append(test_rmse.item())
-#             test_r2 = r2_score(data_dict["y_test"], y_test_pred)
-#             test_r2_list.append(test_r2.item())
-
-#         # Update progress bar with training and testing RMSE
-#         pbar.set_description(
-#             f"Epoch [{epoch+1}/{n_epochs}], RMSE Train: {train_rmse:.4f}, RMSE Test: {test_rmse:.4f}"
-#         )
-
-#     results_dict = {
-#         "y_train_pred": y_train_pred,
-#         "y_test_pred": y_test_pred,
-#         "train_rmse_list": train_rmse_list,
-#         "test_rmse_list": test_rmse_list,
-#         "train_r2_list": train_r2_list,
-#         "test_r2_list": test_r2_list,
-#     }
-
-#     return results_dict
-
 
 def train_model(model, n_epochs, data_dict, scaler_y, device):
     """
@@ -148,12 +53,18 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
         data.TensorDataset(X_train_sc, y_train_sc), shuffle=True, batch_size=32
     )
 
+    # Check if conv2dlstm is the model else keep unsqueeze dim the same
+    unsqueeze_dim = -1
+    model_class_name = model.__class__.__name__.lower()
+    if "conv2d" in model_class_name:
+        unsqueeze_dim = 1
+
     # Training loop
     pbar = tqdm.tqdm(range(n_epochs))
     for epoch in pbar:
         model.train()
         for X_batch, y_batch in loader:
-            y_pred = model(X_batch.unsqueeze(1))
+            y_pred = model(X_batch.unsqueeze(unsqueeze_dim))
             loss = loss_fn(y_pred, y_batch)
 
             optimizer.zero_grad()
@@ -164,7 +75,7 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
         model.eval()
         with torch.no_grad():
             # Training data evaluation
-            y_train_pred = model(X_train_sc.unsqueeze(1))
+            y_train_pred = model(X_train_sc.unsqueeze(unsqueeze_dim))
             y_train_pred_inv = torch.Tensor(
                 scaler_y.inverse_transform(
                     y_train_pred.cpu().reshape(-1, 1).detach().numpy()
@@ -188,7 +99,7 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
 
             # Validation data evaluation (if available)
             if has_val:
-                y_val_pred = model(X_val_sc.unsqueeze(1))
+                y_val_pred = model(X_val_sc.unsqueeze(unsqueeze_dim))
                 y_val_pred_inv = torch.Tensor(
                     scaler_y.inverse_transform(
                         y_val_pred.cpu().reshape(-1, 1).detach().numpy()
@@ -210,7 +121,7 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
                 val_r2_list.append(val_r2)
 
             else:  # Testing data evaluation
-                y_test_pred = model(X_test_sc.unsqueeze(1))
+                y_test_pred = model(X_test_sc.unsqueeze(unsqueeze_dim))
                 y_test_pred_inv = torch.Tensor(
                     scaler_y.inverse_transform(
                         y_test_pred.cpu().reshape(-1, 1).detach().numpy()
