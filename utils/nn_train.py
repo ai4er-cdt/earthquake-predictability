@@ -177,9 +177,6 @@ def train_model(model, n_epochs, data_dict, scaler_y, device):
     return results_dict
 
 
-# TODO: Test the below!!!
-
-
 def eval_model_on_test_set(model, results_dict, data_dict, scaler_y, device):
     """
     Evaluate the model on the test set and return RMSE and R^2 metrics.
@@ -198,22 +195,32 @@ def eval_model_on_test_set(model, results_dict, data_dict, scaler_y, device):
     # Load scaled test features
     X_test_sc = data_dict["X_test_sc"].to(device)
 
+    # Check if conv2dlstm is the model else keep unsqueeze dim the same
+    unsqueeze_dim = -1
+    model_class_name = model.__class__.__name__.lower()
+    if "conv2d" in model_class_name:
+        unsqueeze_dim = 1
+
     # Predict and inverse transform to original scale
-    y_test_pred = model(X_test_sc.unsqueeze(-1))
+    y_test_pred = model(X_test_sc.unsqueeze(unsqueeze_dim))
 
     # Define loss function as mean squared error
     loss_fn = nn.MSELoss()
 
     # Calculate RMSE and R^2
     y_test_pred_inv = torch.Tensor(
-        scaler_y.inverse_transform(y_test_pred.cpu().detach().numpy())
+        scaler_y.inverse_transform(
+            y_test_pred.cpu().reshape(-1, 1).detach().numpy()
+        )
     )
-    # test_rmse = np.sqrt(loss_fn(y_test_pred_inv, data_dict["y_test"].to(device))).item()
+    y_test_pred_inv = y_test_pred_inv.reshape(*data_dict["y_test"].shape)
+
     test_rmse = np.sqrt(
         loss_fn(y_test_pred_inv.cpu(), data_dict["y_test"].cpu())
     ).item()
     test_r2 = r2_score(
-        data_dict["y_test"], y_test_pred_inv.cpu().detach().numpy()
+        data_dict["y_test"].reshape(-1, 1),
+        y_test_pred_inv.cpu().reshape(-1, 1).detach().numpy(),
     )
 
     # Compile results

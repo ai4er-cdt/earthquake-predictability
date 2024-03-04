@@ -15,12 +15,15 @@ class Conv2DLSTMModel(nn.Module):
         input_steps (int): The number of time steps in the input data sequence.
         output_steps (int): The desired number of time steps to forecast.
         hidden_size (int): The number of features in the hidden state of the LSTM layer.
+        kernel_size (int): The size of the kernel in the Conv2D layer.
 
     Methods:
         forward(x): Defines the forward pass of the model.
     """
 
-    def __init__(self, n_variates, input_steps, output_steps, hidden_size):
+    def __init__(
+        self, n_variates, input_steps, output_steps, hidden_size, kernel_size
+    ):
         super(Conv2DLSTMModel, self).__init__()
 
         # Initialize model attributes
@@ -30,11 +33,22 @@ class Conv2DLSTMModel(nn.Module):
             output_steps  # Number of time steps in the output prediction
         )
         self.hidden_size = hidden_size  # Size of the LSTM hidden layer
+        self.kernel_size = (
+            kernel_size,
+            kernel_size,
+        )  # Size of the kernel in the convolution layer
+        self.padding_size = (
+            int((kernel_size - 1) / 2),
+            int((kernel_size - 1) / 2),
+        )  # Size of the padding to preserve spatial dimension
 
         # Define a 2D convolutional layer to process spatial features
-        # The layer has 1 input channel, 64 output channels, a kernel size of 3x3, and padding of 1 to preserve spatial dimensions
+        # The layer has 1 input channel, 64 output channels, a kernel size of mxm, and padding of 1 to preserve spatial dimensions
         self.conv2d = nn.Conv2d(
-            in_channels=1, out_channels=64, kernel_size=(3, 3), padding=(1, 1)
+            in_channels=1,
+            out_channels=64,
+            kernel_size=self.kernel_size,
+            padding=self.padding_size,
         )
 
         # Define a ReLU activation function to introduce non-linearity after the convolutional layer

@@ -3,10 +3,10 @@
 import pickle
 from dataclasses import dataclass
 
+import pandas as pd
 import tyro
 
-from scripts.models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
-from scripts.models.tcn_oneshot_multistep import MultiStepTCN
+import scripts.models.conv2dlstm_oneshot_multistep as conv2dlstm
 from utils.data_preprocessing import (
     create_dataset,
     moving_average_causal_filter,
@@ -19,11 +19,7 @@ from utils.general_functions import set_seed, set_torch_device
 from utils.nn_io import save_model
 from utils.nn_train import eval_model_on_test_set, train_model
 from utils.paths import MAIN_DIRECTORY, PLOTS_DIR
-from utils.plotting import (
-    plot_all_data_results,
-    plot_metric_results,
-    plot_single_seg_result,
-)
+from utils.plotting import plot_all_data_results, plot_metric_results
 
 ### ------ Parameters Definition ------ ###
 
@@ -40,7 +36,7 @@ class ExperimentConfig:
 
     seed: int = 17
     """random seed for the dataset and model to ensure reproducibility."""
-    exp: str = "cascadia_1_seg"
+    exp: str = "cascadia_1to6_seg"
     """experiment name or identifier."""
     record: bool = True
     """flag to indicate whether results should be recorded."""
@@ -56,52 +52,43 @@ class ExperimentConfig:
 
     # Preprocessing config options
 
-    smoothing_window: int = 60
+    smoothing_window: int = 10
     """moving average window size for data smoothing."""
     downsampling_factor: int = 1
     """factor by which to downsample the data."""
-    lookback: int = 180
+    lookback: int = 300
     """number of past observations to consider for forecasting."""
     forecast: int = 30
     """number of future observations to forecast."""
-    n_forecast_windows: int = 30
+    n_forecast_windows: int = 5
     """number of forecasted windows in the test set."""
-    n_validation_windows: int = 30
+    n_validation_windows: int = 5
     """number of validation windows in the train set."""
 
     # Model config options
 
-    model: str = "TCN"  # Or "LSTM"
+    model: str = "Conv2DLSTM"
     """model type to use"""
-    n_variates: int = 1
-    """number of variates in the dataset (e.g., univariate or multivariate)."""
     hidden_size: int = 50
     """size of the hidden layers in the LSTM model."""
-    n_layers: int = 1
-    """number of layers in the LSTM model."""
     kernel_size: int = 3
-    """size of the kernel in the convolutional layers of the TCN model."""
-    epochs: int = 75
+    """size of the kernel in the convolutional layers of the Conv2DLSTM model."""
+    epochs: int = 20
     """number of epochs for training the model."""
     dropout: float = 0
     """fraction of neurons to drop in model"""
 
     # Plotting config options
-
-    plot_title: str = (
-        "Original Time Series and Model Predictions of Segment 1 sum"
-    )
+    plot_title: str = "Original Time Series and Model Predictions"
     """title for the plot."""
     plot_xlabel: str = "Time (days)"
     """label for the x-axis of the plot."""
-    plot_ylabel: str = "Displacement potency (?)"
+    plot_ylabel: str = "Displacement potency ($m^3$)"
     """label for the y-axis of the plot."""
     zoom_min: int = 3200
     """minimum x-axis value for zooming in on the plot."""
-    zoom_max: int = 3400
+    zoom_max: int = 4000
     """maximum x-axis value for zooming in on the plot."""
-    chosen_seg: int = 3200
-    """segment of lookback and forecast to plot."""
     save_plots: bool = True
     """flag to indicate whether to save the plots."""
 
@@ -124,13 +111,21 @@ device = set_torch_device()
 ### ------ Load and pre-process data ------ ###
 
 # Load dataset and convert to dataframe
-dataset = SlowEarthquakeDataset([args.exp])
-df = SlowEarthquakeDataset.convert_to_df(dataset, args.exp)
-df_seg_1 = df["seg_avg"] / 1e8
+columns = {}
+dataset = SlowEarthquakeDataset([f"cascadia_{i}_seg" for i in range(1, 6 + 1)])
+dataset.load()
+
+for i in range(1, 6 + 1):
+    ds_exp = dataset[f"cascadia_{i}_seg"]
+    X, Y, t = ds_exp["X"], ds_exp["Y"], ds_exp["t"]
+    columns[f"seg_{i}_avg"] = X.reshape(-1)
+
+ts_data = pd.DataFrame(columns) / 1e8
+ts_data.head()
 
 # Smooth and pre-process the data into windows
 df_smoothed = moving_average_causal_filter(
-    df_seg_1, args.smoothing_window, args.downsampling_factor
+    ts_data, args.smoothing_window, args.downsampling_factor
 )
 X, y = create_dataset(df_smoothed, args.lookback, args.forecast)
 
@@ -152,22 +147,13 @@ data_dict, scaler_X, scaler_y = normalise_dataset(
 ### ------ Train Models ------ ###
 
 # Choose model
-if args.model == "LSTM":
-    model = MultiStepLSTMMultiLayer(
-        args.n_variates,
-        args.hidden_size,
-        args.n_layers,
-        args.output_size,
-        device,
-    )
-elif args.model == "TCN":
-    model = MultiStepTCN(
-        args.n_variates,
-        args.lookback,
-        args.output_size,
-        [args.hidden_size],
-        args.kernel_size,
-        args.dropout,
+if args.model == "Conv2DLSTM":
+    model = conv2dlstm.Conv2DLSTMModel(
+        n_variates=len(df_smoothed.columns),
+        input_steps=args.lookback,
+        output_steps=args.forecast,
+        hidden_size=args.hidden_size,
+        kernel_size=args.kernel_size,
     )
 
 # Train the model
@@ -199,68 +185,59 @@ if args.record:
     record_metrics(
         model,
         {"y_test": y_test, "y_pred": results_dict["y_test_pred"]},
-        "cascadia",
+        "cascadia_1to6",
         model_dir,
     )
 
 
-### ------ Plot Results ------ ###
+# ### ------ Plot Results ------ ###
 
 if args.plot:
     # Plot predictions against true values
+    for idx in range(0, 6):
+        plot_all_data_results(
+            data_dict,
+            results_dict,
+            args.lookback,
+            args.forecast,
+            args.plot_title,
+            args.plot_xlabel,
+            args.plot_ylabel,
+            [],
+            ith_segment=idx,
+            save_plot=args.save_plots,
+        )
 
-    plot_single_seg_result(
-        data_dict,
-        results_dict,
-        args.lookback,
-        args.forecast,
-        args.chosen_seg,
-        args.plot_title,
-        args.plot_xlabel,
-        args.plot_ylabel,
-        save_plot=args.save_plots,
-    )
+        plot_all_data_results(
+            data_dict,
+            results_dict,
+            args.lookback,
+            args.forecast,
+            args.plot_title,
+            args.plot_xlabel,
+            args.plot_ylabel,
+            args.zoom_window,
+            ith_segment=idx,
+            save_plot=args.save_plots,
+        )
 
-    plot_all_data_results(
-        data_dict,
-        results_dict,
-        args.lookback,
-        args.forecast,
-        args.plot_title,
-        args.plot_xlabel,
-        args.plot_ylabel,
-        [],
-        save_plot=args.save_plots,
-    )
+        # Plot RMSE and R^2
+        plot_metric_results(
+            args.epochs,
+            results_dict["train_rmse_list"],
+            results_dict["val_rmse_list"],
+            "RMSE",
+            "Validation",
+            args.save_plots,
+        )
+        plot_metric_results(
+            args.epochs,
+            results_dict["train_r2_list"],
+            results_dict["val_r2_list"],
+            "R$^2$",
+            "Validation",
+            args.save_plots,
+        )
 
-    plot_all_data_results(
-        data_dict,
-        results_dict,
-        args.lookback,
-        args.forecast,
-        args.plot_title,
-        args.plot_xlabel,
-        args.plot_ylabel,
-        args.zoom_window,
-        plot_type="scatter",
-        save_plot=args.save_plots,
-    )
-
-    # Plot RMSE and R^2
-    plot_metric_results(
-        args.epochs,
-        results_dict["train_rmse_list"],
-        results_dict["val_rmse_list"],
-        "RMSE",
-        args.save_plots,
-    )
-    plot_metric_results(
-        args.epochs,
-        results_dict["train_r2_list"],
-        results_dict["val_r2_list"],
-        "R$^2$",
-        args.save_plots,
-    )
-
-    if args.save_plots:
-        print(f"Plots saved in {PLOTS_DIR}")
+        if args.save_plots:
+            print(f"Plots saved in {PLOTS_DIR}")

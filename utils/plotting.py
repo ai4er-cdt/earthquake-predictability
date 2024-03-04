@@ -487,10 +487,16 @@ def plot_all_data_results(
     # Save the plot if specified
     if save_plot:
         current_time = datetime.now().isoformat(timespec="seconds")
-        plt.savefig(
-            f"{PLOTS_DIR}/{username}_{current_time}_all_data.png",
-            bbox_inches="tight",
-        )
+        if ith_segment is not None:
+            plt.savefig(
+                f"{PLOTS_DIR}/{username}_{current_time}_{ith_segment}_all_data.png",
+                bbox_inches="tight",
+            )
+        else:
+            plt.savefig(
+                f"{PLOTS_DIR}/{username}_{current_time}_all_data.png",
+                bbox_inches="tight",
+            )
 
 
 def plot_metric_results(

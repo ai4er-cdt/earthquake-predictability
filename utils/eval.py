@@ -22,13 +22,15 @@ def record_metrics(model, data, exp_type, model_dir):
     score_dict = {}
     score_dict["user"] = username  # Reusing 'username' from your system
     score_dict["r2"] = r2_score(
-        data["y_test"], data["y_pred"]
+        data["y_test"].reshape(-1, 1), data["y_pred"].reshape(-1, 1)
     )  # Calculate R^2 score
     score_dict["mae"] = mean_absolute_error(
-        data["y_test"], data["y_pred"]
+        data["y_test"].reshape(-1, 1), data["y_pred"].reshape(-1, 1)
     )  # Calculate MAE
     score_dict["rmse"] = np.sqrt(
-        mean_squared_error(data["y_test"], data["y_pred"])  # Calculate RMSE
+        mean_squared_error(
+            data["y_test"].reshape(-1, 1), data["y_pred"].reshape(-1, 1)
+        )  # Calculate RMSE
     )
     score_dict["exp_type"] = exp_type  # Save the exp_type being evaluated
     score_dict["model_dir"] = model_dir  # Save the model directory
