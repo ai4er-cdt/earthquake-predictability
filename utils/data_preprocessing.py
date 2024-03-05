@@ -82,6 +82,82 @@ def compare_feature_statistics(
 
 
 ### --------------------------------------------- ###
+#               Feature Engineering                 #
+### --------------------------------------------- ###
+
+def find_peak_indices(data, threshold=100):
+
+    """
+    Finds the peaks of a univariate oscillating time series.
+
+    Parameters:
+        data (pd.Series): A univariate oscillating time series
+        threshold (integer): The window size used before and after a specific index to determine if it is a peak
+
+    Returns:
+        peak_indices: A list of the indices of the peaks.
+    """
+
+    peak_indices = [0]
+    for i in range(threshold, len(data) - threshold):
+        if data[i] > max(data[i - threshold : i]) and data[i] >= max(
+            data[i + 1 : i + threshold]
+        ):
+            peak_indices.append(i)
+    return peak_indices
+
+
+def create_features(df, column_name = "signal"):
+
+    """
+    Adds variance, first derivate, second derivative, time since last peak and time since last trough columns to a data frame containing a "signal" shear stress.
+
+    Parameters:
+        data (pd.Series): A data frame containing the time series on which features will be created
+        column_name (string): The column name of the data frame on which features will be created
+
+    Returns:
+        dict: A data frame including the original signal and engineered features
+    """
+
+    # Calculate variance of shear stress
+    df["variance"] = df[column_name].rolling(window=30).var()
+
+    # Calculate first derivative of shear stress
+    df["first_derivative"] = df[column_name].diff()
+
+    # Calculate second derivative of shear stress
+    df["second_derivative"] = df["first_derivative"].diff()
+
+    peak_indices = find_peak_indices(df[column_name])
+    trough_indices = find_peak_indices(-df[column_name])
+
+    # Initialize the columns with NaNs
+    df["steps_since_last_peak"] = np.nan
+    df["steps_since_last_trough"] = np.nan
+
+    # Calculate steps since last peak
+    last_peak_index = None
+    for i in range(len(df)):
+        if i in peak_indices:
+            last_peak_index = i
+        if last_peak_index is not None:
+            df.loc[i, "steps_since_last_peak"] = i - last_peak_index
+
+    # Calculate steps since last trough
+    last_trough_index = None
+    for i in range(len(df)):
+        if i in trough_indices:
+            last_trough_index = i
+        if last_trough_index is not None:
+            df.loc[i, "steps_since_last_trough"] = i - last_trough_index
+
+    df = df.dropna()
+    df = df.reset_index(drop=True)
+
+    return df
+
+### --------------------------------------------- ###
 #           Dataset ready for modelling             #
 ### --------------------------------------------- ###
 
