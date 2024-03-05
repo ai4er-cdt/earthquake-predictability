@@ -47,7 +47,6 @@ else:
         # Define the main directory on Tom's local machine for earthquake predictability
         MAIN_DIRECTORY = "/home/tom-ratsakatika/VSCode/earthquake-predictability"
     if "new_user" in username:
-        # Define the main directory on Tom's local machine for earthquake predictability
         MAIN_DIRECTORY = "new_user_working_directory"
 
 GTC_DATA_DIR = f"{MAIN_DIRECTORY}/{REL_DATA_DIR}/gtc_quakes_data"
