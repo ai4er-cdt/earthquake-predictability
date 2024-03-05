@@ -389,7 +389,7 @@ def normalise_dataset(
 
 
 def normalise_dataset_multi_feature(
-    X_train, y_train, X_test, y_test, X_val=None, y_val=None, scaler_type="standard"
+    X_train, y_train, X_test, y_test, X_val=None, y_val=None, scaler_type="min-max"
 ):
     
     """
@@ -413,8 +413,9 @@ def normalise_dataset_multi_feature(
     # Choose scaler type based on `scaler_type` parameter
     if scaler_type == "standard":
         scalers_X = [StandardScaler() for _ in range(num_features)]
-    elif scaler_type == "standard":
+    elif scaler_type == "min-max":
         scalers_X = [MinMaxScaler() for _ in range(num_features)]
+
     scalers_y = scalers_X  # Use same scalers for y for consistent scaling
 
     # Prepare scaled arrays
