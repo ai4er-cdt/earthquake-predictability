@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 from scipy.stats import f_oneway, ttest_ind
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 ### --------------------------------------------- ###
 #              Downsampling/smoothing               #
@@ -245,6 +245,55 @@ def split_train_test_forecast_windows(
         return X_train, y_train, X_test, y_test
 
 
+def select_features(data_dict_temp, feature_names):
+    """
+    Selects specific features from the dataset based on the given feature names.
+
+    This function maps the desired feature names to their corresponding indices in the dataset arrays
+    and creates a new data dictionary with datasets containing only the selected features.
+    It also assumes that the target variable (y) is at index 0 for the outputs.
+
+    Parameters:
+    - data_dict_temp (dict): The original dataset dictionary containing 'X_train', 'X_test', 'X_val',
+                             and their scaled versions ('_sc'), along with 'y_train', 'y_test', and 'y_val'.
+    - feature_names (list of str): The names of the features to select for the model.
+
+    Returns:
+    - dict: A new dictionary containing the selected features for training, testing, and validation sets,
+            along with their scaled versions and the target variables.
+    """
+    # Define a mapping from feature names to their indices in the dataset
+    feature_map = {
+        "signal": 0,
+        "variance": 1,
+        "first_derivative": 2,
+        "second_derivative": 3,
+        "steps_since_last_peak": 4,
+        "steps_since_last_trough": 5,
+    }
+
+    # Convert the list of feature names to their corresponding indices
+    feature_indices = [feature_map[name] for name in feature_names if name in feature_map]
+
+    # Create a new data dictionary with only the selected features and the target variable at index 0
+    data_dict = {
+        "X_train": data_dict_temp["X_train"][:, :, feature_indices],
+        "X_test": data_dict_temp["X_test"][:, :, feature_indices],
+        "X_val": data_dict_temp["X_val"][:, :, feature_indices],
+        "y_train": data_dict_temp["y_train"][:, :, 0],
+        "y_test": data_dict_temp["y_test"][:, :, 0],
+        "y_val": data_dict_temp["y_val"][:, :, 0],
+        "X_train_sc": data_dict_temp["X_train_sc"][:, :, feature_indices],
+        "X_test_sc": data_dict_temp["X_test_sc"][:, :, feature_indices],
+        "X_val_sc": data_dict_temp["X_val_sc"][:, :, feature_indices],
+        "y_train_sc": data_dict_temp["y_train_sc"][:, :, 0],
+        "y_test_sc": data_dict_temp["y_test_sc"][:, :, 0],
+        "y_val_sc": data_dict_temp["y_val_sc"][:, :, 0],
+    }
+
+    return data_dict
+
+
 ### --------------------------------------------- ###
 #        Normalise dataset on training set          #
 ### --------------------------------------------- ###
@@ -337,3 +386,75 @@ def normalise_dataset(
         )
 
     return data_dict, scaler_X, scaler_y
+
+
+def normalise_dataset_multi_feature(
+    X_train, y_train, X_test, y_test, X_val=None, y_val=None, scaler_type="standard"
+):
+    
+    """
+    Normalizes datasets using either standard or min-max scaling for each feature. Supports training, testing,
+    and optional validation sets, allowing separate scalers for input (X) and output (y) data.
+    
+    Parameters:
+    - X_train, y_train: Training data and labels.
+    - X_test, y_test: Testing data and labels.
+    - X_val, y_val (optional): Validation data and labels.
+    - scaler_type (str): Type of scaler to use ('standard' or 'min-max').
+
+    Returns:
+    - data_dict: Dictionary containing original and scaled datasets.
+    - scalers_X: List of scalers used for X data.
+    - scalers_y: List of scalers used for y data (same as scalers_X due to shared normalization).
+    """
+
+    num_features = X_train.shape[2]
+
+    # Choose scaler type based on `scaler_type` parameter
+    if scaler_type == "standard":
+        scalers_X = [StandardScaler() for _ in range(num_features)]
+    elif scaler_type == "standard":
+        scalers_X = [MinMaxScaler() for _ in range(num_features)]
+    scalers_y = scalers_X  # Use same scalers for y for consistent scaling
+
+    # Prepare scaled arrays
+    X_train_sc, X_test_sc = np.zeros_like(X_train), np.zeros_like(X_test)
+    X_val_sc = np.zeros_like(X_val) if X_val is not None else None
+    y_train_sc, y_test_sc = np.zeros_like(y_train), np.zeros_like(y_test)
+    y_val_sc = np.zeros_like(y_val) if y_val is not None else None
+
+    # Normalize each feature in X datasets
+    for i in range(num_features):
+        X_train_reshaped = X_train[:, :, i].reshape(-1, 1)
+        scalers_X[i].fit(X_train_reshaped)
+        X_train_sc[:, :, i] = scalers_X[i].transform(X_train_reshaped).reshape(X_train.shape[0], X_train.shape[1])
+        X_test_sc[:, :, i] = scalers_X[i].transform(X_test[:, :, i].reshape(-1, 1)).reshape(X_test.shape[0], X_test.shape[1])
+        if X_val is not None:
+            X_val_sc[:, :, i] = scalers_X[i].transform(X_val[:, :, i].reshape(-1, 1)).reshape(X_val.shape[0], X_val.shape[1])
+
+    # Normalize each feature in y datasets using the same scalers as X
+    for i in range(num_features):
+        y_train_sc[:, :, i] = scalers_y[i].transform(y_train[:, :, i].reshape(-1, 1)).reshape(y_train.shape[0], y_train.shape[1])
+        y_test_sc[:, :, i] = scalers_y[i].transform(y_test[:, :, i].reshape(-1, 1)).reshape(y_test.shape[0], y_test.shape[1])
+        if y_val is not None:
+            y_val_sc[:, :, i] = scalers_y[i].transform(y_val[:, :, i].reshape(-1, 1)).reshape(y_val.shape[0], y_val.shape[1])
+
+    # Package data into a dictionary, converting to PyTorch tensors
+    data_dict = {
+        "X_train": X_train, "y_train": y_train,
+        "X_test": X_test, "y_test": y_test,
+        "X_train_sc": torch.tensor(X_train_sc, dtype=torch.float),
+        "y_train_sc": torch.tensor(y_train_sc, dtype=torch.float),
+        "X_test_sc": torch.tensor(X_test_sc, dtype=torch.float),
+        "y_test_sc": torch.tensor(y_test_sc, dtype=torch.float),
+    }
+
+    # Include validation data if available
+    if X_val is not None and y_val is not None:
+        data_dict.update({
+            "X_val": X_val, "y_val": y_val,
+            "X_val_sc": torch.tensor(X_val_sc, dtype=torch.float) if X_val_sc is not None else None,
+            "y_val_sc": torch.tensor(y_val_sc, dtype=torch.float) if y_val_sc is not None else None,
+        })
+
+    return data_dict, scalers_X, scalers_y
