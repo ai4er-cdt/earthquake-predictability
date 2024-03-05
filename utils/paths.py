@@ -14,7 +14,7 @@ username = getpass.getuser()
 
 # Check if the hostname indicates the system is part of the ac.uk domain
 # Else check if the username is present to set up a local development environment
-if "jasmin.ac.uk" or "jc.rl.ac.uk" in hostname:
+if "jasmin.ac.uk" in hostname or "jc.rl.ac.uk" in hostname:
     # Set the base directory path for JASMIN users, assuming the script runs within the JASMIN infrastructure
     current_dir = "/gws/nopw/j04/ai4er/users/"
     # List specific user directories within the JASMIN environment
@@ -45,7 +45,9 @@ else:
         MAIN_DIRECTORY = "/Users/camillagiuliabillari/Desktop/github-repositories/cambridge/earthquake-predictability"
     if "tom" in username:
         # Define the main directory on Tom's local machine for earthquake predictability
-        MAIN_DIRECTORY = "/home/tom-ratsakatika/VSCode/earthquake-predictability"
+        MAIN_DIRECTORY = (
+            "/home/tom-ratsakatika/VSCode/earthquake-predictability"
+        )
     if "new_user" in username:
         MAIN_DIRECTORY = "new_user_working_directory"
 

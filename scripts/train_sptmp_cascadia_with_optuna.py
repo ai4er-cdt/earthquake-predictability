@@ -9,7 +9,11 @@ from datetime import datetime
 
 import optuna
 
+from utils.general_functions import set_seed
 from utils.paths import MAIN_DIRECTORY, username
+
+SEED = 17
+set_seed(SEED)
 
 
 @dataclass
@@ -62,10 +66,9 @@ def objective(trial):
             "hidden_size", [16, 32, 64, 128]
         )
         kernel_size = trial.suggest_int("kernel_size", 3, 3)
-        dropout = trial.suggest_float("dropout", 0.0, 0.5)
 
         # Train the model with suggested hyperparameters
-        cmd = f"python {MAIN_DIRECTORY}/scripts/train_sptmp_cascadia.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --kernel_size {kernel_size} --dropout {dropout}"
+        cmd = f"python {MAIN_DIRECTORY}/scripts/train_sptmp_cascadia.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --kernel_size {kernel_size}"
         subprocess.run(cmd.split())
 
     # Wait for the training script to generate results
