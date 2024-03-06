@@ -5,7 +5,7 @@ import torch.optim as optim
 import torch.utils.data as data
 import tqdm
 from sklearn.metrics import r2_score
-
+from utils.general_functions import set_seed
 
 def train_model(model, n_epochs, data_dict, scaler_y, device):
     """
@@ -233,16 +233,8 @@ def eval_model_on_test_set(model, results_dict, data_dict, scaler_y, device):
     )
     return results_dict
 
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.utils.data as data
-import tqdm
-from sklearn.metrics import r2_score
 
-
-def train_model_multi_feature(model, n_epochs, data_dict, scaler_y, device):
+def train_model_multi_feature(model, n_epochs, data_dict, scaler_y, device, best_model, SEED = 42):
     """
     Train a model for time series forecasting, optionally using a validation set.
     *** Adjusted to work with multiple input features ***
@@ -260,9 +252,15 @@ def train_model_multi_feature(model, n_epochs, data_dict, scaler_y, device):
     """
 
     print(f"Training model on {device}")
-
+    set_seed(SEED)
+    
     # Move model to the specified device
     model = model.to(device)
+    best_model = best_model.to(device)
+
+    best_results_dict = {}
+    best_epoch = 0
+    min_loss = np.Inf
 
     # Prepare data
     X_train_sc = data_dict["X_train_sc"].to(device)
@@ -285,12 +283,15 @@ def train_model_multi_feature(model, n_epochs, data_dict, scaler_y, device):
     loss_fn = nn.MSELoss()
 
     # DataLoader for training data
+
     loader = data.DataLoader(
         data.TensorDataset(X_train_sc, y_train_sc), shuffle=True, batch_size=32
     )
 
     # Training loop
     pbar = tqdm.tqdm(range(n_epochs))
+    pbar.set_description("Initialising...")
+    
     for epoch in pbar:
         model.train()
         for X_batch, y_batch in loader:
@@ -360,13 +361,51 @@ def train_model_multi_feature(model, n_epochs, data_dict, scaler_y, device):
                 test_rmse_list.append(test_rmse)
                 test_r2_list.append(test_r2)
 
+        
         if has_val:
-            pbar_desc = f"Epoch [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Val RMSE: {val_rmse:.4f}"
+            curr_val_loss = val_rmse
         else:
-            pbar_desc = f"Epoch [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Test RMSE: {test_rmse:.4f}"
+            curr_val_loss = test_rmse
 
+        # Check if this is the best model so far (based on validation loss)
+        if curr_val_loss < min_loss:
+
+            min_loss = curr_val_loss
+
+            best_epoch = epoch + 1
+
+            best_state_dict = model.state_dict()
+
+            best_results_dict = {
+                "train_rmse": train_rmse,
+                "train_r2": train_r2,
+            }
+
+            if has_val:
+                best_results_dict.update(
+                    {
+                        "val_rmse": val_rmse,
+                        "val_r2": val_r2,
+                    }
+                )
+            else:
+                best_results_dict.update(
+                    {
+                        "test_rmse": val_rmse,
+                        "test_r2": val_r2,
+                    }
+                )
+
+        if has_val:
+            pbar_desc = f"Best Epoch: {best_epoch} | Last Epoch: [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Val RMSE: {val_rmse:.4f}"
+        else:
+            pbar_desc = f"Best Epoch: {best_epoch} | Last Epoch: [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Test RMSE: {test_rmse:.4f}"
+        
         pbar.set_description(pbar_desc)
 
+    
+    best_model.load_state_dict(best_state_dict)  
+    
     # Compile results
     results_dict = {
         "y_train_pred": y_train_pred_inv.cpu(),
@@ -392,15 +431,16 @@ def train_model_multi_feature(model, n_epochs, data_dict, scaler_y, device):
             }
         )
 
-    return results_dict
+    return results_dict, best_results_dict
 
-def eval_model_on_test_set_multi_feature(model, results_dict, data_dict, scaler_y, device):
+
+def eval_model_on_test_set_multi_feature(best_model, best_results_dict, data_dict, scaler_y, device):
     """
     Evaluate the model on the test set and return RMSE and R^2 metrics.
 
     Parameters:
-        model (torch.nn.Module): Trained model.
-        results_dict (dict): Dictionary containing training and validation predictions and metrics.
+        best_model (torch.nn.Module): Best trained model.
+        best_results_dict (dict): Dictionary containing training and validation predictions and metrics from the best epoch.
         data_dict (dict): Contains scaled test features ('X_test_sc') and original labels ('y_test').
         scaler_y (MinMaxScaler): Scaler for inverse transforming predictions.
         device (str): Device for computation ('cpu' or 'cuda').
@@ -409,11 +449,14 @@ def eval_model_on_test_set_multi_feature(model, results_dict, data_dict, scaler_
         dict: Contains inverse transformed predictions ('y_test_pred'), RMSE ('test_rmse_list'), and R^2 ('test_r2_list').
     """
 
+    best_model = best_model.to(device)
+    best_model.eval()
+
     # Load scaled test features
     X_test_sc = data_dict["X_test_sc"].to(device)
 
     # Predict and inverse transform to original scale
-    y_test_pred = model(X_test_sc)
+    y_test_pred = best_model(X_test_sc)
 
     # Define loss function as mean squared error
     loss_fn = nn.MSELoss()
@@ -431,11 +474,11 @@ def eval_model_on_test_set_multi_feature(model, results_dict, data_dict, scaler_
     )
 
     # Compile results
-    results_dict.update(
+    best_results_dict.update(
         {
             "y_test_pred": y_test_pred_inv.cpu(),
-            "test_rmse_list": test_rmse,
-            "test_r2_list": test_r2,
+            "test_rmse": test_rmse,
+            "test_r2": test_r2,
         }
     )
-    return results_dict
+    return best_results_dict
