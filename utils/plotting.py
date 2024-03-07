@@ -17,6 +17,7 @@ def plot_original_vs_processed_data(
     plot_type="scatter",
     processing_label="Smoothed",
     save_plot=False,
+    s=8,
 ):
     """
     Plots relevant features in the original and processed datasets.
@@ -27,13 +28,20 @@ def plot_original_vs_processed_data(
         plot_type (str): Type of plot. Options: "scatter" or "line".
         processing_label (str): Label describing the processing applied to the data.
         save_plot (bool, optional): If True, saves the plot to the specified directory. Defaults to False.
+        s (int, optional): Size of the dots in the scatter plot. Defaults to 8.
     """
 
     # Create a figure to hold the plots
     plt.figure(figsize=(12, 6))
 
+    def plot_scatter(x, y, label):
+        plt.scatter(x, y, label=label, s=s)  # Adjust s for smaller dots
+
     # Determine the plotting function based on the plot type
-    plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
+    if plot_type == "scatter":
+        plot_fn = plot_scatter
+    else:
+        plot_fn = plt.plot
 
     # Plot original data in the first subplot
     plt.subplot(1, 2, 1)
@@ -66,6 +74,7 @@ def plot_example_sample(
     forecast,
     plot_type="scatter",
     save_plot=False,
+    s=8,
 ):
     """
     Plots an example of input and target data to visualize the lookback and forecast periods.
@@ -78,16 +87,16 @@ def plot_example_sample(
         forecast (int): Number of time steps in the forecast period for the target data.
         plot_type (str, optional): Determines the type of plot to create ('scatter' or 'line'). Defaults to "scatter".
         save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
+        s (int, optional): Size of the dots in the scatter plot. Defaults to 8.
     """
     plt.figure(figsize=(15, 3))
 
     def plot_scatter(x, y, label):
-        plt.scatter(x, y, label=label, s=5)  # Adjust s for smaller dots
+        plt.scatter(x, y, label=label, s=s)  # Adjust s for smaller dots
 
     # Determine the plotting function based on the plot type
     if plot_type == "scatter":
         plot_fn = plot_scatter
-
     else:
         plot_fn = plt.plot
 
@@ -132,6 +141,7 @@ def plot_single_seg_result(
     y_label,
     plot_type="scatter",
     save_plot=False,
+    s=8,
 ):
     """
     Plot the true values and testing prediction for a single segment of time series data.
@@ -147,12 +157,19 @@ def plot_single_seg_result(
         y_label (str): The label for the y-axis.
         plot_type (str): Type of plot. Options: "scatter" or "line". Defaults to "scatter".
         save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
+        s (int, optional): Size of the dots in the scatter plot. Defaults to 8.
     """
 
     plt.figure(figsize=(15, 6))
 
+    def plot_scatter(x, y, label):
+        plt.scatter(x, y, label=label, s=s)  # Adjust s for smaller dots
+
     # Determine the plotting function based on the plot type
-    plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
+    if plot_type == "scatter":
+        plot_fn = plot_scatter
+    else:
+        plot_fn = plt.plot
 
     # Initialize segment index and sizes
     i_seg = chosen_seg  # Example segment index
@@ -258,8 +275,10 @@ def plot_all_data_results(
     x_label,
     y_label,
     zoom_window,
+    ith_segment=None,
     plot_type="line",
     save_plot=False,
+    s=8,
 ):
     """
     Plot true values, training predictions, and testing predictions for time series data.
@@ -273,22 +292,46 @@ def plot_all_data_results(
         title (str): Plot title.
         x_label (str): Label for the x-axis.
         y_label (str): Label for the y-axis.
-        plot_type (str): Type of plot. Options: "scatter" or "line". Defaults to "line".
         zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
+        ith_segment (int): Plots only the ith segment. Defaults to None.
+        plot_type (str): Type of plot. Options: "scatter" or "line". Defaults to "line".
         save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
+        s (int, optional): Size of the dots in the scatter plot. Defaults to 8.
     """
     plt.figure(figsize=(25, 6))
 
+    def plot_scatter(x, y, label):
+        plt.scatter(x, y, label=label, s=s)  # Adjust s for smaller dots
+
     # Determine the plotting function based on the plot type
-    plot_fn = plt.scatter if plot_type == "scatter" else plt.plot
+    if plot_type == "scatter":
+        plot_fn = plot_scatter
+    else:
+        plot_fn = plt.plot
 
     # Combined true value data
-    combined_true = np.concatenate(
-        (data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])
-    )
+    if ith_segment is not None:
+        combined_true = np.concatenate(
+            (
+                data_dict["y_train"][:, 0, ith_segment],
+                data_dict["y_test"][:, 0, ith_segment],
+            )
+        )
+    else:
+        combined_true = np.concatenate(
+            (data_dict["y_train"][:, 0], data_dict["y_test"][:, 0])
+        )
 
     # Training set predictions
-    train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
+    if ith_segment is not None:
+        train_outputs = (
+            results_dict["y_train_pred"][:, :, ith_segment]
+            .cpu()
+            .detach()
+            .numpy()
+        )
+    else:
+        train_outputs = results_dict["y_train_pred"].cpu().detach().numpy()
     # Extract every 'forecast' time step for plotting
     train_plot = np.array(
         [train_outputs[idx] for idx in range(0, len(train_outputs), forecast)]
@@ -302,24 +345,48 @@ def plot_all_data_results(
     val_plot = []
 
     if has_val:
-        # Combined true value data updated with validation set
-        combined_true = np.concatenate(
-            (
-                data_dict["y_train"][:, 0],
-                data_dict["y_val"][:, 0],
-                data_dict["y_test"][:, 0],
+        if ith_segment is not None:
+            # Combined true value data updated with validation set
+            combined_true = np.concatenate(
+                (
+                    data_dict["y_train"][:, 0, ith_segment],
+                    data_dict["y_val"][:, 0, ith_segment],
+                    data_dict["y_test"][:, 0, ith_segment],
+                )
             )
-        )
-
-        # Validation set predictions
-        val_outputs = results_dict["y_val_pred"].cpu().detach().numpy()
+            # Validation set predictions
+            val_outputs = (
+                results_dict["y_val_pred"][:, :, ith_segment]
+                .cpu()
+                .detach()
+                .numpy()
+            )
+        else:
+            # Combined true value data updated with validation set
+            combined_true = np.concatenate(
+                (
+                    data_dict["y_train"][:, 0],
+                    data_dict["y_val"][:, 0],
+                    data_dict["y_test"][:, 0],
+                )
+            )
+            # Validation set predictions
+            val_outputs = results_dict["y_val_pred"].cpu().detach().numpy()
         # Extract every 'forecast' time step for plotting
         val_plot = np.array(
             [val_outputs[idx] for idx in range(0, len(val_outputs), forecast)]
         ).reshape(-1, 1)
 
     # Testing set predictions
-    test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
+    if ith_segment is not None:
+        test_outputs = (
+            results_dict["y_test_pred"][:, :, ith_segment]
+            .cpu()
+            .detach()
+            .numpy()
+        )
+    else:
+        test_outputs = results_dict["y_test_pred"].cpu().detach().numpy()
     # Extract every 'forecast' time step for plotting
     test_plot = np.array(
         [test_outputs[idx] for idx in range(0, len(test_outputs), forecast)]
@@ -401,8 +468,8 @@ def plot_all_data_results(
     if len(zoom_window) > 0:
         # Add vertical lines to indicate forecast window starts
         n_val_test_windows = int((len(val_plot) + len(test_plot)) / forecast)
-        for i in range(n_val_test_windows):
-            x = end_of_train_index + i * forecast
+        for i in range(n_val_test_windows + 1):
+            x = end_of_train_index + lookback + i * forecast
             plt.axvline(x=x, color="grey", linestyle="--")
 
         # Zoom into the specified range
@@ -420,10 +487,16 @@ def plot_all_data_results(
     # Save the plot if specified
     if save_plot:
         current_time = datetime.now().isoformat(timespec="seconds")
-        plt.savefig(
-            f"{PLOTS_DIR}/{username}_{current_time}_all_data.png",
-            bbox_inches="tight",
-        )
+        if ith_segment is not None:
+            plt.savefig(
+                f"{PLOTS_DIR}/{username}_{current_time}_{ith_segment}_all_data.png",
+                bbox_inches="tight",
+            )
+        else:
+            plt.savefig(
+                f"{PLOTS_DIR}/{username}_{current_time}_all_data.png",
+                bbox_inches="tight",
+            )
 
 
 def plot_metric_results(
@@ -476,3 +549,93 @@ def plot_metric_results(
             f"{PLOTS_DIR}/{username}_{current_time}_metrics.png",
             bbox_inches="tight",
         )
+
+
+def plot_random_window(df, feature_list):
+    """
+    Plots a random sample of training features and their future values from `df` using `feature_list` for labels.
+    
+    Parameters:
+    - df (dict): Contains 'X_train_sc' and 'y_train_sc', 3D numpy arrays for scaled training input and output.
+    - feature_list (list): List of strings with the names of the features to be plotted.
+    """
+    
+    # Choose a random sample from the dataset
+    random_index = np.random.randint(0, df["X_train_sc"].shape[0])
+    num_features = len(feature_list)  # Number of features to plot
+    
+    # Create subplot grid
+    fig, axs = plt.subplots(
+        num_features // 2 + num_features % 2, 2, figsize=(15, num_features * 1.5)
+    )
+    
+    # Plot each feature
+    for i in range(num_features):
+        row, col = divmod(i, 2)
+        feature_name = feature_list[i]
+        
+        # Plot training data
+        axs[row, col].plot(df["X_train_sc"][random_index, :, i], label="X_train")
+        # Plot future values
+        axs[row, col].plot(
+            np.arange(df["X_train_sc"].shape[1], df["X_train_sc"].shape[1] + df["y_train_sc"].shape[1]),
+            df["y_train_sc"][random_index, :, i],
+            label="y_train",
+        )
+        
+        # Configure subplot
+        axs[row, col].set_title(feature_name)
+        axs[row, col].legend()
+
+    plt.tight_layout()  # Adjust layout for clear visibility
+    plt.show()  # Display the plot
+
+
+def plot_random_test_window(data_dict, results_dict):
+    """
+    Plots a random test window from the dataset, comparing actual and predicted values.
+
+    This function selects a random test window from `X_test` and plots it alongside the corresponding
+    actual `y_test` values and the predicted `y_test` values from `results_dict`. This visualization
+    helps in assessing the model's performance on unseen data.
+
+    Parameters:
+    - data_dict (dict): A dictionary containing the dataset, with keys 'X_test' and 'y_test'.
+    - results_dict (dict): A dictionary containing the results, with key 'y_test_pred' for predicted values.
+    """
+    # Set a random seed to ensure different windows are selected each time
+    np.random.seed()
+    # Select a random index for the test window
+    random_index = np.random.randint(0, data_dict["X_test"].shape[0])
+
+    # Extract the data for the chosen window
+    # Assuming the first feature is at index 0 for X_test
+    X_test_window = data_dict["X_test"][random_index, :, 0].cpu().numpy()
+    y_test_window = data_dict["y_test"][random_index, :].cpu().numpy()
+    y_test_pred_window = results_dict["y_test_pred"][random_index, :].cpu().numpy()
+
+    # Calculate the starting index for y_test and y_test_pred on the x-axis to align with X_test
+    start_index_for_y = X_test_window.shape[0]
+
+    # Create time steps for each series
+    time_steps_X = np.arange(start_index_for_y)
+    time_steps_y = np.arange(start_index_for_y, start_index_for_y + y_test_window.shape[0])
+
+    # Plotting the test window
+    plt.figure(figsize=(14, 6))
+
+    # Plot the first feature from X_test
+    plt.plot(time_steps_X, X_test_window, label="X_test (signal)", color="blue", linestyle="-")
+
+    # Plot the actual y_test values with adjusted time steps
+    plt.plot(time_steps_y, y_test_window, label="Actual y_test", color="green", linestyle="-")
+
+    # Plot the predicted y_test values with adjusted time steps
+    plt.plot(time_steps_y, y_test_pred_window, label="Predicted y_test", color="orange", linestyle="-")
+
+    # Set plot title, labels, and legend
+    plt.title(f"Test Window {random_index} - Actual vs. Predicted")
+    plt.xlabel("Time Steps")
+    plt.ylabel("Value")
+    plt.legend()
+    plt.show()

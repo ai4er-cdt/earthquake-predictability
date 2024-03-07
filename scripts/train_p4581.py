@@ -2,13 +2,16 @@
 
 from dataclasses import dataclass
 from typing import List
-
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+
+import pickle
 import tyro
+
 from models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
 from models.tcn_oneshot_multistep import MultiStepTCN
 
+from utils.paths import PLOTS_DIR, MAIN_DIRECTORY
 from utils.data_preprocessing import (
     compare_feature_statistics,
     create_dataset,
@@ -22,7 +25,7 @@ from utils.general_functions import set_seed, set_torch_device
 from utils.nn_io import save_model
 from utils.nn_train import train_model
 from utils.plotting import (
-    PLOTS_DIRECTORY,
+    PLOTS_DIR,
     plot_all_data_results,
     plot_example_sample,
     plot_metric_results,
@@ -50,6 +53,13 @@ class ExperimentConfig:
     """flag to indicate whether results should be recorded."""
     plot: bool = True
     """flag to indicate whether to plot the results."""
+
+    # Optuna config options
+
+    optuna: bool = False
+    """flag to indicate whether to use optuna for hyperparameter optimization."""
+    optuna_id: int = 0
+    """optuna study id for saving a study."""
 
     # Preprocessing config options
 
@@ -211,6 +221,12 @@ elif args.model == "TCN":
 # Train the model
 results_dict = train_model(model, args.epochs, data_dict, scaler_y, device)
 
+if args.optuna:
+    with open(f"{MAIN_DIRECTORY}/scripts/tmp/results_dict_{args.optuna_id}.tmp", "wb") as handle:
+        pickle.dump(results_dict, handle)
+
+    args.record = False
+    args.plot = False
 
 if args.record:
     model_dir = save_model(
@@ -276,7 +292,7 @@ if args.plot:
     )
 
     # Plot 10 random samples from the test set
-    # os.makedirs(PLOTS_DIRECTORY, exist_ok=True)
+    # os.makedirs(PLOTS_DIR, exist_ok=True)
     for i in range(10):
         # random number between 0 and len(y_test)
         idx = np.random.randint(0, len(y_test))
@@ -299,6 +315,6 @@ if args.plot:
         )
         # save plot
         plt.legend()
-        plt.savefig(f"{PLOTS_DIRECTORY}/sample_{i}.png")
+        plt.savefig(f"{PLOTS_DIR}/sample_{i}.png")
 
-    print(f"plots saved in {PLOTS_DIRECTORY}")
+    print(f"plots saved in {PLOTS_DIR}")

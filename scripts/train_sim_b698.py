@@ -19,11 +19,7 @@ from utils.general_functions import set_seed, set_torch_device
 from utils.nn_io import save_model
 from utils.nn_train import eval_model_on_test_set, train_model
 from utils.paths import MAIN_DIRECTORY, PLOTS_DIR
-from utils.plotting import (
-    plot_all_data_results,
-    plot_metric_results,
-    plot_single_seg_result,
-)
+from utils.plotting import plot_all_data_results, plot_metric_results
 
 ### ------ Parameters Definition ------ ###
 
@@ -40,7 +36,7 @@ class ExperimentConfig:
 
     seed: int = 17
     """random seed for the dataset and model to ensure reproducibility."""
-    exp: str = "cascadia_1_seg"
+    exp: str = "sim_b698"
     """experiment name or identifier."""
     record: bool = True
     """flag to indicate whether results should be recorded."""
@@ -56,17 +52,17 @@ class ExperimentConfig:
 
     # Preprocessing config options
 
-    smoothing_window: int = 60
+    smoothing_window: int = 2
     """moving average window size for data smoothing."""
-    downsampling_factor: int = 1
+    downsampling_factor: int = 2
     """factor by which to downsample the data."""
     lookback: int = 180
     """number of past observations to consider for forecasting."""
     forecast: int = 30
     """number of future observations to forecast."""
-    n_forecast_windows: int = 30
+    n_forecast_windows: int = 15
     """number of forecasted windows in the test set."""
-    n_validation_windows: int = 30
+    n_validation_windows: int = 15
     """number of validation windows in the train set."""
 
     # Model config options
@@ -88,20 +84,16 @@ class ExperimentConfig:
 
     # Plotting config options
 
-    plot_title: str = (
-        "Original Time Series and Model Predictions of Segment 1 sum"
-    )
+    plot_title: str = "Original Time Series and Model Predictions"
     """title for the plot."""
     plot_xlabel: str = "Time (days)"
     """label for the x-axis of the plot."""
-    plot_ylabel: str = "Displacement potency (?)"
+    plot_ylabel: str = "Shear Stress (mPa)"
     """label for the y-axis of the plot."""
-    zoom_min: int = 3200
+    zoom_min: int = 9010
     """minimum x-axis value for zooming in on the plot."""
-    zoom_max: int = 3400
+    zoom_max: int = 9500
     """maximum x-axis value for zooming in on the plot."""
-    chosen_seg: int = 3200
-    """segment of lookback and forecast to plot."""
     save_plots: bool = True
     """flag to indicate whether to save the plots."""
 
@@ -121,18 +113,27 @@ set_seed(args.seed)
 device = set_torch_device()
 
 
-### ------ Load and pre-process data ------ ###
+### ------ Load and pre-process simulated data ------ ###
 
-# Load dataset and convert to dataframe
-dataset = SlowEarthquakeDataset([args.exp])
-df = SlowEarthquakeDataset.convert_to_df(dataset, args.exp)
-df_seg_1 = df["seg_avg"] / 1e8
+EXP = "sim_b698"
+
+dataset = SlowEarthquakeDataset([EXP])
+df = SlowEarthquakeDataset.convert_to_df(dataset, EXP)
+df_shear_stress = df["obs_shear_stress"]
+
+# Print sample rate from df['time']
+# sample_rate = 1 / np.mean(np.diff(df["time"]))
+# print(f"Raw sample rate: {sample_rate}")
 
 # Smooth and pre-process the data into windows
 df_smoothed = moving_average_causal_filter(
-    df_seg_1, args.smoothing_window, args.downsampling_factor
+    df_shear_stress, args.smoothing_window, args.downsampling_factor
 )
 X, y = create_dataset(df_smoothed, args.lookback, args.forecast)
+
+# Print sample rate from based on the downsampling factor
+# downsampled_sample_rate = sample_rate * (1 / args.downsampling_factor)
+# print(f"Downsampled sample rate: {downsampled_sample_rate}")
 
 # Split into train and test sets and normalise it
 (
@@ -176,7 +177,6 @@ results_dict = eval_model_on_test_set(
     model, results_dict, data_dict, scaler_y, device
 )
 
-
 if args.optuna:
     with open(
         f"{MAIN_DIRECTORY}/scripts/tmp/results_dict_{args.optuna_id}.tmp", "wb"
@@ -192,14 +192,14 @@ if args.record:
         df_smoothed.values[-len(y_test) :],
         results_dict,
         range(0, len(y_test)),
-        model_name=f"{args.model}_cascadia",
+        model_name=f"{args.model}_sim_b698",
         model_params=args,
     )
 
     record_metrics(
         model,
         {"y_test": y_test, "y_pred": results_dict["y_test_pred"]},
-        "cascadia",
+        "sim_b698",
         model_dir,
     )
 
@@ -208,19 +208,6 @@ if args.record:
 
 if args.plot:
     # Plot predictions against true values
-
-    plot_single_seg_result(
-        data_dict,
-        results_dict,
-        args.lookback,
-        args.forecast,
-        args.chosen_seg,
-        args.plot_title,
-        args.plot_xlabel,
-        args.plot_ylabel,
-        save_plot=args.save_plots,
-    )
-
     plot_all_data_results(
         data_dict,
         results_dict,

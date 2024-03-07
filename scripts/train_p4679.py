@@ -2,11 +2,15 @@
 
 from dataclasses import dataclass
 from typing import List
-
+import numpy as np
+import matplotlib.pyplot as plt
+import pickle
 import tyro
+
 from models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
 from models.tcn_oneshot_multistep import MultiStepTCN
 
+from utils.paths import PLOTS_DIR, MAIN_DIRECTORY
 from utils.data_preprocessing import (
     compare_feature_statistics,
     create_dataset,
@@ -20,7 +24,6 @@ from utils.general_functions import set_seed, set_torch_device
 from utils.nn_io import save_model
 from utils.nn_train import train_model
 from utils.plotting import (
-    PLOTS_DIRECTORY,
     plot_all_data_results,
     plot_metric_results,
     plot_original_vs_processed_data,
@@ -45,8 +48,16 @@ class ExperimentConfig:
     """experiment name or identifier."""
     record: bool = True
     """flag to indicate whether results should be recorded."""
-    plot: bool = True
+    plot: bool = False
     """flag to indicate whether to plot the results."""
+
+    # Optuna config options
+
+    optuna: bool = False
+    """flag to indicate whether to use optuna for hyperparameter optimization."""
+    optuna_id: int = 0
+    """optuna study id for saving a study."""
+
 
     # Preprocessing config options
 
@@ -170,6 +181,12 @@ elif args.model == "TCN":
 # Train the model
 results_dict = train_model(model, args.epochs, data_dict, scaler_y, device)
 
+if args.optuna:
+    with open(f"{MAIN_DIRECTORY}/scripts/tmp/results_dict_{args.optuna_id}.tmp", "wb") as handle:
+        pickle.dump(results_dict, handle)
+
+    args.record = False
+    args.plot = False
 
 if args.record:
     model_dir = save_model(
@@ -224,14 +241,14 @@ if args.plot:
     plot_metric_results(
         args.epochs,
         results_dict["train_rmse_list"],
-        results_dict["test_rmse_list"],
+        results_dict["val_rmse_list"],
         "RMSE",
     )
     plot_metric_results(
         args.epochs,
         results_dict["train_r2_list"],
-        results_dict["test_r2_list"],
+        results_dict["val_r2_list"],
         "R$^2$",
     )
 
-    print(f"plots saved in {PLOTS_DIRECTORY}")
+    print(f"plots saved in {PLOTS_DIR}")
