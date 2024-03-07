@@ -397,9 +397,9 @@ def train_model_multi_feature(model, n_epochs, data_dict, scaler_y, device, best
                 )
 
         if has_val:
-            pbar_desc = f"Best Epoch: {best_epoch} | Last Epoch: [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Val RMSE: {val_rmse:.4f}"
+            pbar_desc = f"Best Epoch: {best_epoch}, Val RMSE: {min_loss:.4f} | Last Epoch: [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Val RMSE: {val_rmse:.4f}"
         else:
-            pbar_desc = f"Best Epoch: {best_epoch} | Last Epoch: [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Test RMSE: {test_rmse:.4f}"
+            pbar_desc = f"Best Epoch: {best_epoch}, Val RMSE: {min_loss:.4f} | Last Epoch: [{epoch+1}/{n_epochs}], Train RMSE: {train_rmse:.4f}, Test RMSE: {test_rmse:.4f}"
         
         pbar.set_description(pbar_desc)
 
