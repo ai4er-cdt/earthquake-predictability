@@ -89,8 +89,8 @@ def set_param(exp):
         parameters["time_label"] = r"Time [" + parameters["time_unit"] + "]"
     elif exp == "p4581":
         parameters = {
-            "t0": 2325.0,  # 2075.0,
-            "tend": 2525.0,  # 2275.0,
+            "t0": 3800, # modified to align with Laurenti et al. Original: 2325.0
+            "tend": 4100, # modified to align with Laurenti et al. Original: 2525.0
             "Nheaders": 5,
             "var4peaks": "ShearStress",
             "peaks_dist": 300,
@@ -102,8 +102,8 @@ def set_param(exp):
             "file_format": "txt",
             "downsample_factor": 1,
             "vl": None,
-            "obs_unit": "MPa",  # this is a guess, added by T. Ratsakatika
-            "time_unit": "s",  # this is a guess, added by T. Ratsakatika
+            "obs_unit": "MPa",
+            "time_unit": "s",
         }
         parameters["obs_label"] = r"$\tau_f$ [" + parameters["obs_unit"] + "]"
         parameters["time_label"] = r"Time [" + parameters["time_unit"] + "]"

@@ -436,17 +436,17 @@ def train_model_multi_feature(model, n_epochs, data_dict, scaler_y, device, best
 
 def eval_model_on_test_set_multi_feature(best_model, best_results_dict, data_dict, scaler_y, device):
     """
-    Evaluate the model on the test set and return RMSE and R^2 metrics.
+    Evaluate the model on the test set and return RMSE and R^2 metrics for both scaled and original data.
 
     Parameters:
         best_model (torch.nn.Module): Best trained model.
         best_results_dict (dict): Dictionary containing training and validation predictions and metrics from the best epoch.
-        data_dict (dict): Contains scaled test features ('X_test_sc') and original labels ('y_test').
+        data_dict (dict): Contains scaled test features ('X_test_sc'), original labels ('y_test'), and scaled labels ('y_test_sc').
         scaler_y (MinMaxScaler): Scaler for inverse transforming predictions.
         device (str): Device for computation ('cpu' or 'cuda').
 
     Returns:
-        dict: Contains inverse transformed predictions ('y_test_pred'), RMSE ('test_rmse_list'), and R^2 ('test_r2_list').
+        dict: Contains inverse transformed predictions ('y_test_pred'), RMSE ('test_rmse', 'test_rmse_sc'), and R^2 ('test_r2', 'test_r2_sc').
     """
 
     best_model = best_model.to(device)
@@ -455,22 +455,35 @@ def eval_model_on_test_set_multi_feature(best_model, best_results_dict, data_dic
     # Load scaled test features
     X_test_sc = data_dict["X_test_sc"].to(device)
 
-    # Predict and inverse transform to original scale
+    # Predict scaled labels
     y_test_pred = best_model(X_test_sc)
 
     # Define loss function as mean squared error
     loss_fn = nn.MSELoss()
 
-    # Calculate RMSE and R^2
+    # Un-scale predictions to original scale
     y_test_pred_inv = torch.Tensor(
         scaler_y.inverse_transform(y_test_pred.cpu().detach().numpy())
     )
-    # test_rmse = np.sqrt(loss_fn(y_test_pred_inv, data_dict["y_test"].to(device))).item()
+
+    # Calculate unscaled RMSE and R^2
     test_rmse = np.sqrt(
         loss_fn(y_test_pred_inv.cpu(), data_dict["y_test"].cpu())
     ).item()
     test_r2 = r2_score(
         data_dict["y_test"], y_test_pred_inv.cpu().detach().numpy()
+    )
+
+    # Calculate scaled RMSE and R^2
+    y_test_pred_sc = y_test_pred.cpu()  # Move prediction to CPU for consistency in calculation
+    y_test_sc_cpu = data_dict["y_test_sc"].cpu()  # Ensure y_test_sc is also on CPU
+
+    # Ensure tensors are detached before converting to numpy arrays for RMSE calculation
+    test_rmse_sc = np.sqrt(
+        loss_fn(y_test_pred_sc.detach(), y_test_sc_cpu.detach())
+    ).item()
+    test_r2_sc = r2_score(
+        y_test_sc_cpu.detach().numpy(), y_test_pred_sc.detach().numpy()
     )
 
     # Compile results
@@ -479,6 +492,8 @@ def eval_model_on_test_set_multi_feature(best_model, best_results_dict, data_dic
             "y_test_pred": y_test_pred_inv.cpu(),
             "test_rmse": test_rmse,
             "test_r2": test_r2,
+            "test_rmse_sc": test_rmse_sc,  # Added scaled RMSE
+            "test_r2_sc": test_r2_sc       # Added scaled R^2
         }
     )
     return best_results_dict
