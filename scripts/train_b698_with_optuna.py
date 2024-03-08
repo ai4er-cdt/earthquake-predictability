@@ -29,8 +29,8 @@ class OptunaExperimentConfig:
     """
 
     n_trials_optuna: int = 4
-    n_jobs_optuna: int = 4  # -1 to automatically take number of cores, but keep fixed for JASMIN
-    model: str = "LSTM"  # Model type ("TCN" or "LSTM")
+    n_jobs_optuna: int = 3  # -1 to automatically take number of cores, but keep fixed for JASMIN
+    model: str = "TCN"  # Model type ("TCN" or "LSTM")
     results_format: str = (
         "csv"  # Format to save the results in ("csv" or "pkl")
     )
@@ -61,7 +61,7 @@ def objective(trial):
     # Different hyperparameter suggestion logic based on model type
     if opt_args.model == "TCN":
         # Define and suggest hyperparameters for TCN model - NOTE: For now these are just examples to try get optuna running!!
-        lookback = trial.suggest_int("lookback", 180, 600)
+        lookback = 277
         hidden_size = trial.suggest_categorical(
             "hidden_size", [16, 32, 64, 128]
         )
@@ -69,17 +69,17 @@ def objective(trial):
         dropout = trial.suggest_float("dropout", 0.1, 0.5)
 
         # Train the model with suggested hyperparameters
-        cmd = f"python {MAIN_DIRECTORY}/scripts/train_sim_b698.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --kernel_size {kernel_size} --dropout {dropout}"
+        cmd = f"python {MAIN_DIRECTORY}/scripts/train_b698.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --kernel_size {kernel_size} --dropout {dropout}"
         subprocess.run(cmd.split())
 
     elif opt_args.model == "LSTM":
         # Define and suggest hyperparameters for LSTM model - NOTE: For now these are just examples to try get optuna running!!
-        lookback = trial.suggest_int("lookback", 180, 600)
+        lookback = 362
         hidden_size = trial.suggest_categorical("hidden_size", [16, 32, 64])
         n_layers = trial.suggest_int("n_layers", 1, 3)
 
         # Construct command to run the model training script with the suggested parameters
-        cmd = f"python {MAIN_DIRECTORY}/scripts/train_sim_b698.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --n_layers {n_layers}"
+        cmd = f"python {MAIN_DIRECTORY}/scripts/train_b698.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --n_layers {n_layers}"
         subprocess.run(cmd.split())  # Execute the command
 
     # Wait for the training script to generate results
@@ -140,20 +140,10 @@ def run_optuna_optimization():
 # Running the optimization process and saving the best result
 best_results_dict = run_optuna_optimization()
 
-# Save a version of the best model
-if opt_args.model == "TCN":
-    # Train the model with suggested hyperparameters
-    cmd = f"""python {MAIN_DIRECTORY}/scripts/train_sim_b698.py --lookback {best_results_dict["lookback"]} --model {opt_args.model} --hidden_size {best_results_dict["hidden_size"]} --kernel_size {best_results_dict["kernel_size"]} --dropout {best_results_dict["dropout"]}"""
-    subprocess.run(cmd.split())
-elif opt_args.model == "LSTM":
-    # Train the model with suggested hyperparameters
-    cmd = f"""python {MAIN_DIRECTORY}/scripts/train_sim_b698.py --lookback {best_results_dict["lookback"]} --model {opt_args.model} --hidden_size {best_results_dict["hidden_size"]} --n_layers {best_results_dict["n_layers"]}"""
-    subprocess.run(cmd.split())  # Execute the command
-
 # Construct filename with user, model type, and current time for uniqueness
 optuna_results_dir = f"{MAIN_DIRECTORY}/scripts/optuna_results"
 current_time = datetime.now().isoformat(timespec="seconds")
-base_filename = f"{username}_best_{opt_args.model}_sim_b698_{current_time}.{opt_args.results_format}"
+base_filename = f"{username}_best_{opt_args.model}_b698_{current_time}.{opt_args.results_format}"
 model_dir = os.path.join(optuna_results_dir, base_filename)
 
 # Save the best hyperparameters to a file
