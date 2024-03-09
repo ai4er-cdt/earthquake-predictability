@@ -82,6 +82,37 @@ def compare_feature_statistics(
 
 
 ### --------------------------------------------- ###
+#        Custom Loss Function Pre-processing        #
+### --------------------------------------------- ###
+
+def calculate_smooth_derivatives(data, derivative_smoothing_window, column_name = "signal"):
+    """
+    Calculates smooth derivatives to be used for the custom loss function. These utilise extra smoothing defined by the derivative_smoothing_window. These derivatives are not calculated causally and so cannot be used as input features for model training.
+
+    Parameters:
+        data (pd.Series): A data frame containing the time series on which derivatives will be created
+        column_name (string): The column name contaiing the time series on which derivatives will be created
+        derivative_smoothing_window (integer): The window size used to smooth the time series prior to calculating derivatives.
+
+    Returns:
+        Original dataframe with columns added for the smooth derivatives.
+    """
+    # Apply extra smoothing
+
+
+
+    # Calculate derivatives
+
+
+
+    # Scale derivatives???
+
+
+
+
+
+
+### --------------------------------------------- ###
 #               Feature Engineering                 #
 ### --------------------------------------------- ###
 
