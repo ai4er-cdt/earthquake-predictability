@@ -479,7 +479,7 @@ def plot_all_data_results(
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.legend()
+    # plt.legend()
 
     # Display the plot
     plt.show()
@@ -554,35 +554,42 @@ def plot_metric_results(
 def plot_random_window(df, feature_list):
     """
     Plots a random sample of training features and their future values from `df` using `feature_list` for labels.
-    
+
     Parameters:
     - df (dict): Contains 'X_train_sc' and 'y_train_sc', 3D numpy arrays for scaled training input and output.
     - feature_list (list): List of strings with the names of the features to be plotted.
     """
-    
+
     # Choose a random sample from the dataset
     random_index = np.random.randint(0, df["X_train_sc"].shape[0])
     num_features = len(feature_list)  # Number of features to plot
-    
+
     # Create subplot grid
     fig, axs = plt.subplots(
-        num_features // 2 + num_features % 2, 2, figsize=(15, num_features * 1.5)
+        num_features // 2 + num_features % 2,
+        2,
+        figsize=(15, num_features * 1.5),
     )
-    
+
     # Plot each feature
     for i in range(num_features):
         row, col = divmod(i, 2)
         feature_name = feature_list[i]
-        
+
         # Plot training data
-        axs[row, col].plot(df["X_train_sc"][random_index, :, i], label="X_train")
+        axs[row, col].plot(
+            df["X_train_sc"][random_index, :, i], label="X_train"
+        )
         # Plot future values
         axs[row, col].plot(
-            np.arange(df["X_train_sc"].shape[1], df["X_train_sc"].shape[1] + df["y_train_sc"].shape[1]),
+            np.arange(
+                df["X_train_sc"].shape[1],
+                df["X_train_sc"].shape[1] + df["y_train_sc"].shape[1],
+            ),
             df["y_train_sc"][random_index, :, i],
             label="y_train",
         )
-        
+
         # Configure subplot
         axs[row, col].set_title(feature_name)
         axs[row, col].legend()
@@ -612,26 +619,48 @@ def plot_random_test_window(data_dict, results_dict):
     # Assuming the first feature is at index 0 for X_test
     X_test_window = data_dict["X_test"][random_index, :, 0].cpu().numpy()
     y_test_window = data_dict["y_test"][random_index, :].cpu().numpy()
-    y_test_pred_window = results_dict["y_test_pred"][random_index, :].cpu().numpy()
+    y_test_pred_window = (
+        results_dict["y_test_pred"][random_index, :].cpu().numpy()
+    )
 
     # Calculate the starting index for y_test and y_test_pred on the x-axis to align with X_test
     start_index_for_y = X_test_window.shape[0]
 
     # Create time steps for each series
     time_steps_X = np.arange(start_index_for_y)
-    time_steps_y = np.arange(start_index_for_y, start_index_for_y + y_test_window.shape[0])
+    time_steps_y = np.arange(
+        start_index_for_y, start_index_for_y + y_test_window.shape[0]
+    )
 
     # Plotting the test window
     plt.figure(figsize=(14, 6))
 
     # Plot the first feature from X_test
-    plt.plot(time_steps_X, X_test_window, label="X_test (signal)", color="blue", linestyle="-")
+    plt.plot(
+        time_steps_X,
+        X_test_window,
+        label="X_test (signal)",
+        color="blue",
+        linestyle="-",
+    )
 
     # Plot the actual y_test values with adjusted time steps
-    plt.plot(time_steps_y, y_test_window, label="Actual y_test", color="green", linestyle="-")
+    plt.plot(
+        time_steps_y,
+        y_test_window,
+        label="Actual y_test",
+        color="green",
+        linestyle="-",
+    )
 
     # Plot the predicted y_test values with adjusted time steps
-    plt.plot(time_steps_y, y_test_pred_window, label="Predicted y_test", color="orange", linestyle="-")
+    plt.plot(
+        time_steps_y,
+        y_test_pred_window,
+        label="Predicted y_test",
+        color="orange",
+        linestyle="-",
+    )
 
     # Set plot title, labels, and legend
     plt.title(f"Test Window {random_index} - Actual vs. Predicted")
