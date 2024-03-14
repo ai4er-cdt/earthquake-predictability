@@ -1,7 +1,0 @@
-user,r2,mae,rmse,exp_type,model_dir
-p341cam,0.7592605327741538,0.15590604,0.23730136,cascadia_1to6,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_Conv2DLSTM_cascadia_2024-03-04T00:18:37_torch
-p341cam,0.7592605327741538,0.1559060364961624,0.2373013645410537,cascadia_1to6,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_Conv2DLSTM_cascadia_2024-03-04T00:30:15_torch
-p341cam,0.7592605327741538,0.1559060364961624,0.2373013645410537,cascadia_1to6,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_Conv2DLSTM_cascadia_2024-03-04T00:35:52_torch
-p341cam,0.7592605327741538,0.1559060364961624,0.2373013645410537,cascadia_1to6,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_Conv2DLSTM_cascadia_2024-03-04T00:37:10_torch
-p341cam,0.7592605327741538,0.1559060364961624,0.2373013645410537,cascadia_1to6,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_Conv2DLSTM_cascadia_2024-03-04T00:38:15_torch
-p341cam,0.7592605327741538,0.15590603649616241,0.23730136454105377,cascadia_1to6,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_Conv2DLSTM_cascadia_2024-03-04T02:44:05_torch
