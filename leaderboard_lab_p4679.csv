@@ -1,3 +1,0 @@
-user,r2,mae,rmse,exp_type,model_dir
-ashine,0.9999605161637246,0.0002990619686897844,0.00038286231574602425,lab_p4679,/gws/nopw/j04/ai4er/users/ashine/earthquake-predictability/results/ashine_LSTM_lab_p4679_2024-02-18T11:29:02_torch
-ashine,0.9543238039373588,0.0056477957,0.0126755815,lab_p4679,/gws/nopw/j04/ai4er/users/ashine/earthquake-predictability/results/ashine_LSTM_lab_p4581_2024-02-14T12:18:15_torch

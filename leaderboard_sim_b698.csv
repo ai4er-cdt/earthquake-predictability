@@ -1,3 +1,0 @@
-user,r2,mae,rmse,exp_type,model_dir
-p341cam,0.9928512562604204,0.0078101977705955505,0.01963997073471546,sim_b698,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_LSTM_sim_b698_2024-03-05T18:28:41_torch
-p341cam,0.9872892723244346,0.011963805,0.026188532,sim_b698,/gws/nopw/j04/ai4er/users/pn341/earthquake-predictability/results/p341cam_TCN_sim_b698_2024-03-05T15:46:48_torch

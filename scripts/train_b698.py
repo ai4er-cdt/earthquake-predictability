@@ -88,7 +88,7 @@ class ExperimentConfig:
     """title for the plot."""
     plot_xlabel: str = "Time (days)"
     """label for the x-axis of the plot."""
-    plot_ylabel: str = "Shear Stress (mPa)"
+    plot_ylabel: str = "Shear Stress (MPa)"
     """label for the y-axis of the plot."""
     zoom_min: int = 9010
     """minimum x-axis value for zooming in on the plot."""
