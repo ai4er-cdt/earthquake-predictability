@@ -53,6 +53,14 @@ gaps: the feature engineering of input time-series data, time-series
 forecasting of SSEs in nature, and the use of transfer learning to enhance 
 model accuracy by pre-training on systems with more available data.
 
+## Repo structure
+
+* [archive/](./archive/) for all the archived code written as part of the project
+* [assets/](./assets/) assets such as user profile pictures used in README.md
+* [notebooks/](./notebooks/) for the main Jupyter notebooks of the project
+* [scripts/](./scripts/) for the training scripts and PyTorch models
+* [utils/](./utils/) for the main utilities used to develop our pre-processing pipeline
+
 ## Methodology
 
 This research project utilizes a one-shot prediction method for its 
