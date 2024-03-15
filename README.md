@@ -66,7 +66,7 @@ Below are links to the original dataset used in our repository.
 | sim b698     | simulated-lab    | [geolandi/labquakesde](https://github.com/Geolandi/labquakesde) | [Gualandi et al., 2023](https://www.sciencedirect.com/science/article/pii/S0012821X23000080?via%3Dihub) |
 | cascadia 1-6     | nature    | ftp://ftp.gps.caltech.edu/pub/avouac/Cascadia_SSE_Nature/Data_for_Nature | [Michel et al., 2019](https://www.nature.com/articles/s41586-019-1673-6) |
 
-[You can download the data in a structure ready to use in our notebooks and scripts from Google Drive.](https://drive.google.com/drive/folders/1PwO-OKlLo34oC8-NJ-Nd1qKLRvIdAx9n?usp=drive_link). You will be prompted to request permission from Adriano Gualandi to access these folders. Once downloaded, save the three data folders in the following location within your working directory (create new folders as necessary): ../earthquake-predictability/data_local/gtc_quakes_data/
+[You can download the data in a structure ready to use in our notebooks and scripts from Google Drive](https://drive.google.com/drive/folders/1PwO-OKlLo34oC8-NJ-Nd1qKLRvIdAx9n?usp=drive_link). You will be prompted to request permission from Adriano Gualandi to access these folders. Once downloaded, save the three data folders in the following location within your working directory (create new folders as necessary): ../earthquake-predictability/data_local/gtc_quakes_data/
 
 ## Installation and usage
 
