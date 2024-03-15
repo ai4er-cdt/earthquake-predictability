@@ -105,7 +105,7 @@ Source license. For full details see [LICENSE](./LICENSE).
 
 ## Acknowledgments
 
-We would like to thank our faculty supervisor Adriano Gualandi as well as our 
+We would like to thank our faculty supervisor Dr Adriano Gualandi as well as our 
 project mentor Andrew McDonald. We benefited greatly from their guidance and 
 support.
 
