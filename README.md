@@ -95,7 +95,7 @@ following command:
 Note: The code was tested on Python 3.12.
 
 To get started we recommend taking a look at 
-[notebooks/AI4ER GTC - Slow Earthquake Time Series Forecasting.ipynb](./notebooksAI4ER%20GTC%20-%20Slow%20Earthquake%20Time%20Series%20Forecasting.ipynb). 
+[notebooks/AI4ER GTC - Slow Earthquake Time Series Forecasting.ipynb](./notebooks/AI4ER%20GTC%20-%20Slow%20Earthquake%20Time%20Series%20Forecasting.ipynb). 
 This notebook provides a full overview of the pipeline and documentation.
 
 ## License
