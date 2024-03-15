@@ -1,4 +1,4 @@
-# AI4ER MRes GTC - Earthquake Predictability
+# AI4ER MRes GTC 2024 - Earthquake Predictability
 
 <table>
   <tr align="center">
@@ -16,42 +16,42 @@
 
 ## Overview
 
-Earthquakes have substantial worldwide effects, and accurate forecasting can 
-greatly assist in emergency responses and preparedness efforts. Slow Slip 
-Events (SSEs), exhibit quasi-periodic patterns, making them more predictable 
-and significant for earthquake forecasting research. SSEs contribute to the 
-moment budget, play a part in the seismic cycle, and may even trigger regular 
-earthquakes. Due to the highly non-linear nature of friction and the potential 
-significance of short and long-term patterns in SSEs, machine learning (ML), 
+Earthquakes have substantial worldwide effects, and accurate forecasting can
+greatly assist in emergency responses and preparedness efforts. Slow Slip
+Events (SSEs), exhibit quasi-periodic patterns, making them more predictable
+and significant for earthquake forecasting research. SSEs contribute to the
+moment budget, play a part in the seismic cycle, and may even trigger regular
+earthquakes. Due to the highly non-linear nature of friction and the potential
+significance of short and long-term patterns in SSEs, machine learning (ML),
 especially deep learning, is utilized.
 
-SSEs are observed in nature, reproduced in laboratories, and simulated using 
-various techniques. Previous studies have used ML in slow earthquake research 
-for detection, time to failure prediction, and time-series forecasting, 
+SSEs are observed in nature, reproduced in laboratories, and simulated using
+various techniques. Previous studies have used ML in slow earthquake research
+for detection, time to failure prediction, and time-series forecasting,
 employing different ML architectures.
 
-In this research project, we employed machine learning techniques to predict 
-labquakes and Slow Slip Events (SSEs). Our study addressed three key research 
-questions: (1) matching the state-of-the-art accuracy for labquake predictions 
-and improving performance through feature engineering, (2) applying our LSTM 
-and TCN models to Cascadia data for single and multiple segment forecasts, and 
-(3) investigating the impact of pre-training with simulated data and lab data 
-and transfer learning to Cascadia. We achieved a 9.4% performance enhancement 
-for labquake predictions, obtained maximum R^2 scores of 0.8729 and 0.5219 for 
-Cascadia forecasts, and found that pre-training marginally improved labquake 
-predictions. However, transfer learning results for Cascadia remained 
-inconclusive. Notably, the LSTM model consistently outperformed the TCN model 
+In this research project, we employed machine learning techniques to predict
+labquakes and Slow Slip Events (SSEs). Our study addressed three key research
+questions: (1) matching the state-of-the-art accuracy for labquake predictions
+and improving performance through feature engineering, (2) applying our LSTM
+and TCN models to Cascadia data for single and multiple segment forecasts, and
+(3) investigating the impact of pre-training with simulated data and lab data
+and transfer learning to Cascadia. We achieved a 9.4% performance enhancement
+for labquake predictions, obtained maximum R^2 scores of 0.8729 and 0.5219 for
+Cascadia forecasts, and found that pre-training marginally improved labquake
+predictions. However, transfer learning results for Cascadia remained
+inconclusive. Notably, the LSTM model consistently outperformed the TCN model
 across all domains.
 
 ## Repo structure
 
-* [archive/](./archive/) for all the archived code written as part of the 
+* [archive/](./archive/) for all the archived code written as part of the
 project
 * [assets/](./assets/) for assets such as user profile pictures used in the README
 * [notebooks/](./notebooks/) for the main Jupyter notebooks of the project
 * [scripts/](./scripts/) for the training scripts and PyTorch models
   * [scripts/models/](./scripts/models/) for the models developed
-* [utils/](./utils/) for the main utilities used to develop our pre-processing 
+* [utils/](./utils/) for the main utilities used to develop our pre-processing
 pipeline
 
 ## Data
@@ -72,12 +72,12 @@ Below are links to the original dataset used in our repository.
 
 To get setup and tryout the code, follow these steps:
 
-1. Install Miniconda or Anaconda (if not already installed) from the official 
+1. Install Miniconda or Anaconda (if not already installed) from the official
 website: <https://docs.conda.io/en/latest/miniconda.html>
 1. Open a terminal or command prompt.
 1. Clone the repository to your local machine.
 1. Navigate to the repository root.
-1. Create a new conda environment using the yaml file by running the following 
+1. Create a new conda environment using the yaml file by running the following
 command:
     ```bash
     conda env create -f environment.yaml
@@ -86,7 +86,7 @@ command:
     ```bash
     conda activate gtc_env
     ```
-1. To enable the `utils` packages to be accessible to the Python path, run the 
+1. To enable the `utils` packages to be accessible to the Python path, run the
 following command:
     ```bash
     conda develop “<your local path>/earthquake-predictability"
@@ -94,8 +94,8 @@ following command:
 
 Note: The code was tested on Python 3.12.
 
-To get started we recommend taking a look at 
-[notebooks/AI4ER GTC - Slow Earthquake Time Series Forecasting.ipynb](./notebooks/AI4ER%20GTC%20-%20Slow%20Earthquake%20Time%20Series%20Forecasting.ipynb). 
+To get started we recommend taking a look at
+[notebooks/AI4ER GTC - Slow Earthquake Time Series Forecasting.ipynb](./notebooks/AI4ER%20GTC%20-%20Slow%20Earthquake%20Time%20Series%20Forecasting.ipynb).
 This notebook provides a full overview of the pipeline and documentation.
 
 ## License
@@ -105,8 +105,8 @@ Source license. For full details see [LICENSE](./LICENSE).
 
 ## Acknowledgments
 
-We would like to thank our faculty supervisor Dr Adriano Gualandi as well as our 
-project mentor Andrew McDonald. We benefited greatly from their guidance and 
+We would like to thank our faculty supervisor Dr Adriano Gualandi as well as our
+project mentor Andrew McDonald. We benefited greatly from their guidance and
 support.
 
 ## Team Members
