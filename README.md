@@ -66,7 +66,7 @@ pipeline
 | p4679        | labquake    | [Marone Lab](http://psudata.s3-website.us-east-2.amazonaws.com/) |[Lyu et al., 2019](https://www.sciencedirect.com/science/article/pii/S0040195119301325) |
 | b698         | labquake    | [INGVLab](https://osf.io/9dqh7/) |[Mele Veedu et al., 2020](https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2020GL087985) |
 | sim b698     | simulated-lab    | [geolandi/labquakesde](https://github.com/Geolandi/labquakesde) | [Gualandi et al, 2023](https://www.sciencedirect.com/science/article/pii/S0012821X23000080?via%3Dihub) |
-| cascadia 1-6     | nature    |  | [Michel et al., 2019](https://www.nature.com/articles/s41586-019-1673-6) |
+| cascadia 1-6     | nature    | [Cascadia SSE Nature](ftp://ftp.gps.caltech.edu/pub/avouac/Cascadia_SSE_Nature/Data_for_Nature/) | [Michel et al., 2019](https://www.nature.com/articles/s41586-019-1673-6) |
 
 ## Installation and usage
 
