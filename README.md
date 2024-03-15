@@ -4,15 +4,11 @@
   <tr align="center">
     <!-- UKRI Logo -->
     <td align="center">
-      <img src="assets/images/readme/logo_ukri.png" alt="UKRI Logo" width="400" />
-    </td>
-    <!-- British Antarctic Survey Logo -->
-    <td align="center">
-      <img src="assets/images/readme/logo_bas.png" alt="British Antarctic Survey" width="400" />
+      <img src="assets/images/readme/logo_ukri_colour.png" alt="UKRI Logo" width="600" />
     </td>
     <!-- University of Cambridge Logo -->
     <td align="center">
-      <img src="assets/images/readme/logo_cambridge.png" alt="University of Cambridge" width="400" />
+      <img src="assets/images/readme/logo_cambridge_colour.jpg" alt="University of Cambridge" width="600" />
     </td>
   </tr>
 </table>
