@@ -109,36 +109,6 @@ We would like to thank our faculty supervisor Dr Adriano Gualandi as well as our
 project mentor Andrew McDonald. We benefited greatly from their guidance and 
 support.
 
-## FAIR Data Evaluation Checklist
-
-| FAIR Data Principles | Status |
-|----------------------|--------|
-| **Findable**         |        |
-| A persistent identifier is assigned to your data | [ ] |
-| There are rich metadata, describing your data | [ ] |
-| The metadata are online in a searchable resource e.g., a catalogue or data repository | [ ] |
-| The metadata record specifies the persistent identifier | [ ] |
-| **Accessible**       |        |
-| Following the persistent ID will take you to the data or associated metadata | [ ] |
-| The protocol by which data can be retrieved follows recognised standards e.g., http | [ ] |
-| The access procedure includes authentication and authorisation steps, if necessary | [ ] |
-| Metadata are accessible, wherever possible, even if the data aren’t | [ ] |
-| **Interoperable**    |        |
-| Data is provided in commonly understood and preferably open formats | [ ] |
-| The metadata provided follows relevant standards | [ ] |
-| Controlled vocabularies, keywords, thesauri or ontologies are used where possible | [ ] |
-| Qualified references and links are provided to other related data | [ ] |
-| **Reusable**         |        |
-| The data are accurate and well described with many relevant attributes | [ ] |
-| The data have a clear and accessible data usage license | [ ] |
-| It is clear how, why, and by whom the data have been created and processed | [ ] |
-| The data and metadata meet relevant domain standards | [ ] |
-
-
-Sources:\
-[1] [How FAIR are your data?](https://zenodo.org/records/1065991)\
-[2] [FAIR Principles](https://www.go-fair.org/fair-principles/)
-
 ## Team Members
 
 <table>
