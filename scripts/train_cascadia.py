@@ -1,8 +1,11 @@
 # Import relevant libraries and local modules
 
+import os
 import pickle
+import random
 from dataclasses import dataclass
 
+import numpy
 import tyro
 
 from scripts.models.lstm_oneshot_multistep import MultiStepLSTMMultiLayer
@@ -56,7 +59,7 @@ class ExperimentConfig:
 
     # Preprocessing config options
 
-    smoothing_window: int = 60
+    smoothing_window: int = 10
     """moving average window size for data smoothing."""
     downsampling_factor: int = 1
     """factor by which to downsample the data."""
@@ -110,16 +113,21 @@ class ExperimentConfig:
         self.zoom_window = [self.zoom_min, self.zoom_max]
 
 
+### ------ Set up ------ ###
+
+# Create parameter class using tyro
 args = tyro.cli(ExperimentConfig)
 
-### ------ Set up ------ ###
+# Distribute computation on different GPUs for each run
+gpu_id = random.randint(0, 3)
+print(f"Using GPU no: {gpu_id}")
+os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu_id}"
 
 # Set random seed
 set_seed(args.seed)
 
 # Set torch device
 device = set_torch_device()
-
 
 ### ------ Load and pre-process data ------ ###
 
@@ -264,3 +272,5 @@ if args.plot:
 
     if args.save_plots:
         print(f"Plots saved in {PLOTS_DIR}")
+
+print({numpy.pi})

@@ -431,7 +431,7 @@ def plot_all_data_results(
             lookback + len(combined_plot),
         ),
         test_plot,
-        label="Testing prediction",
+        label="Test set predictions",
     )
 
     if has_val:
@@ -477,9 +477,127 @@ def plot_all_data_results(
 
     # Set plot title, labels, and legend
     plt.title(title)
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    # plt.legend()
+    plt.xlabel(x_label, fontsize=22)
+    plt.ylabel(y_label, fontsize=22)
+    plt.xticks(fontsize=20)
+    plt.yticks(fontsize=20)
+    # plt.legend(loc="upper right")
+
+    # Display the plot
+    plt.show()
+
+    # Save the plot if specified
+    if save_plot:
+        current_time = datetime.now().isoformat(timespec="seconds")
+        if ith_segment is not None:
+            plt.savefig(
+                f"{PLOTS_DIR}/{username}_{current_time}_{ith_segment}_all_data.png",
+                bbox_inches="tight",
+            )
+        else:
+            plt.savefig(
+                f"{PLOTS_DIR}/{username}_{current_time}_all_data.png",
+                bbox_inches="tight",
+            )
+
+
+def plot_eval_test_results(
+    data_dict,
+    results_dict,
+    lookback,
+    forecast,
+    title,
+    x_label,
+    y_label,
+    ith_segment=None,
+    plot_type="line",
+    save_plot=False,
+    s=8,
+    eval_prefix="eval_",
+):
+    """
+    Plot true values, training predictions, and testing predictions for time series data.
+
+    Parameters:
+        test_start_index (int): Index where the test set starts.
+        data_dict (dict): Dictionary containing training and testing data arrays.
+        results_dict (dict): Dictionary containing the training and testing predictions.
+        lookback (int): Number of time steps to look back in the data.
+        forecast (int): Number of time steps ahead to forecast.
+        title (str): Plot title.
+        x_label (str): Label for the x-axis.
+        y_label (str): Label for the y-axis.
+        zoom_window (tuple): Tuple containing start and end indices for zooming into the plot (optional).
+        ith_segment (int): Plots only the ith segment. Defaults to None.
+        plot_type (str): Type of plot. Options: "scatter" or "line". Defaults to "line".
+        save_plot (bool, optional): If True, saves the plot to a file. Defaults to False.
+        s (int, optional): Size of the dots in the scatter plot. Defaults to 8.
+    """
+    plt.figure(figsize=(25, 6))
+
+    def plot_scatter(x, y, label, color=None):
+        plt.scatter(
+            x, y, label=label, color=color, s=s
+        )  # Adjust s for smaller dots
+
+    # Determine the plotting function based on the plot type
+    if plot_type == "scatter":
+        plot_fn = plot_scatter
+    else:
+        plot_fn = plt.plot
+
+    # Combined true value data
+    if ith_segment is not None:
+        true_values = data_dict["y_test"][:, 0, ith_segment]
+    else:
+        true_values = data_dict["y_test"][:, 0]
+
+    # Testing set predictions
+    if ith_segment is not None:
+        test_outputs = (
+            results_dict[f"{eval_prefix}y_test_pred"][:, :, ith_segment]
+            .cpu()
+            .detach()
+            .numpy()
+        )
+    else:
+        test_outputs = (
+            results_dict[f"{eval_prefix}y_test_pred"].cpu().detach().numpy()
+        )
+
+    # Extract every 'forecast' time step for plotting
+    test_plot = np.array(
+        [test_outputs[idx] for idx in range(0, len(test_outputs), forecast)]
+    ).reshape(-1, 1)
+
+    # Plot true values
+    plot_fn(
+        range(0, len(true_values)),
+        true_values,
+        label="True values",
+    )
+
+    # Plot testing predictions
+    plot_fn(
+        range(0, len(test_plot)),
+        test_plot,
+        color="red",
+        label="Testing prediction",
+    )
+
+    # Add vertical lines to indicate forecast window starts
+    n_val_test_windows = int((len(test_plot)) / forecast)
+    for i in range(n_val_test_windows + 1):
+        x = i * forecast
+        plt.axvline(x=x, color="grey", linestyle="--")
+
+    # Set plot title, labels, and legend
+    plt.title(title)
+    plt.xlabel(x_label, fontsize=18)
+    plt.ylabel(y_label, fontsize=18)
+    plt.xticks(np.arange(0, len(test_plot), 60), fontsize=16)
+    plt.yticks(fontsize=16)
+    plt.legend(loc="upper right")
 
     # Display the plot
     plt.show()
@@ -506,6 +624,7 @@ def plot_metric_results(
     metric_label,
     val_or_test="Test",
     save_plot=False,
+    y_max=0,
 ):
     """
     Plot a metric over epochs for training, testing, and optionally validation sets.
@@ -539,6 +658,8 @@ def plot_metric_results(
     plt.ylabel(metric_label)
     plt.title(f"{metric_label} Over Epochs")
     plt.legend(loc="best")
+    if y_max > 0:
+        plt.ylim(0, y_max)
 
     plt.show()
 

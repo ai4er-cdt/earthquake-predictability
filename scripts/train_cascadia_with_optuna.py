@@ -7,7 +7,10 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 
+import numpy
 import optuna
+import torch
+import tyro
 
 from utils.general_functions import set_seed
 from utils.paths import MAIN_DIRECTORY, username
@@ -28,15 +31,17 @@ class OptunaExperimentConfig:
         results_format (str): Format to save the results in. Supports "csv" or "pkl".
     """
 
-    n_trials_optuna: int = 4
-    n_jobs_optuna: int = 4  # -1 to automatically take number of cores, but keep fixed for JASMIN
-    model: str = "LSTM"  # Model type ("TCN" or "LSTM")
+    n_trials_optuna: int = 100
+    n_jobs_optuna: int = 4  # -1 to automatically take number of cores, but keep fixed for Jasmin
+    model: str = "TCN"  # Model type ("TCN" or "LSTM")
+    forecast: int = 30  # days
     results_format: str = (
         "csv"  # Format to save the results in ("csv" or "pkl")
     )
+    dataset: str = "cascadia"  # or "lab" or "sim""
 
 
-opt_args = OptunaExperimentConfig()
+opt_args = tyro.cli(OptunaExperimentConfig)
 
 
 ### ------ Optuna Hyperparameter Tuning ------ ###
@@ -61,25 +66,29 @@ def objective(trial):
     # Different hyperparameter suggestion logic based on model type
     if opt_args.model == "TCN":
         # Define and suggest hyperparameters for TCN model - NOTE: For now these are just examples to try get optuna running!!
-        lookback = 277  # trial.suggest_int("lookback", 180, 600)
+        lookback = trial.suggest_int(
+            "lookback", 180, 1020, step=opt_args.forecast
+        )
         hidden_size = trial.suggest_categorical(
             "hidden_size", [16, 32, 64, 128]
         )
         kernel_size = trial.suggest_int("kernel_size", 2, 8)
-        dropout = trial.suggest_float("dropout", 0.1, 0.5)
+        dropout = trial.suggest_float("dropout", 0, 0.5)
 
         # Train the model with suggested hyperparameters
-        cmd = f"python {MAIN_DIRECTORY}/scripts/train_cascadia.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --kernel_size {kernel_size} --dropout {dropout}"
+        cmd = f"python {MAIN_DIRECTORY}/scripts/train_cascadia.py --optuna --optuna_id {optuna_id} --lookback {lookback} --forecast {opt_args.forecast} --model {opt_args.model} --hidden_size {hidden_size} --kernel_size {kernel_size} --dropout {dropout}"
         subprocess.run(cmd.split())
 
     elif opt_args.model == "LSTM":
         # Define and suggest hyperparameters for LSTM model - NOTE: For now these are just examples to try get optuna running!!
-        lookback = 362  # trial.suggest_int("lookback", 180, 600)
-        hidden_size = trial.suggest_categorical("hidden_size", [64, 128])
+        lookback = trial.suggest_int(
+            "lookback", 180, 1020, step=opt_args.forecast
+        )
+        hidden_size = trial.suggest_int("hidden_size", 20, 200)
         n_layers = trial.suggest_int("n_layers", 1, 3)
 
         # Construct command to run the model training script with the suggested parameters
-        cmd = f"python {MAIN_DIRECTORY}/scripts/train_cascadia.py --optuna --optuna_id {optuna_id} --lookback {lookback} --model {opt_args.model} --hidden_size {hidden_size} --n_layers {n_layers}"
+        cmd = f"python {MAIN_DIRECTORY}/scripts/train_cascadia.py --optuna --optuna_id {optuna_id} --lookback {lookback} --forecast {opt_args.forecast} --model {opt_args.model} --hidden_size {hidden_size} --n_layers {n_layers}"
         subprocess.run(cmd.split())  # Execute the command
 
     # Wait for the training script to generate results
@@ -91,13 +100,8 @@ def objective(trial):
     with open(results_path, "rb") as f:
         results_dict = pickle.load(f)
 
-    # Check for validation set
-    has_val = "val_rmse_list" in results_dict
-
     # Use the final test RMSE as the objective to minimize
-    final_test_rmse = results_dict[
-        f"{'val' if has_val else 'test'}_rmse_list"
-    ][-1]
+    final_test_rmse = results_dict["test_rmse"]
 
     return final_test_rmse
 
@@ -124,26 +128,29 @@ def run_optuna_optimization():
         lambda trial: objective(trial),
         n_trials=opt_args.n_trials_optuna,
         n_jobs=opt_args.n_jobs_optuna,
+        catch=(torch.cuda.OutOfMemoryError),
     )
 
     # Print the results of the best trial
     print("Best trial:")
     trial = study.best_trial
-    print("  Value: ", trial.value)
+    print("  Test RMSE Value: ", trial.value)
     print("  Params: ")
     for key, value in trial.params.items():
         print(f"    {key}: {value}")
 
-    return trial.params
+    return trial.params.items()
 
 
 # Running the optimization process and saving the best result
 best_results_dict = run_optuna_optimization()
 
 # Construct filename with user, model type, and current time for uniqueness
-optuna_results_dir = f"{MAIN_DIRECTORY}/scripts/optuna_results"
+optuna_results_dir = (
+    f"{MAIN_DIRECTORY}/scripts/optuna_results/{opt_args.dataset}"
+)
 current_time = datetime.now().isoformat(timespec="seconds")
-base_filename = f"{username}_best_{opt_args.model}_cascadia_{current_time}.{opt_args.results_format}"
+base_filename = f"{username}_best_{opt_args.model}_{opt_args.dataset}_{current_time}.{opt_args.results_format}"
 model_dir = os.path.join(optuna_results_dir, base_filename)
 
 # Save the best hyperparameters to a file
@@ -151,8 +158,10 @@ if opt_args.results_format == "csv":
     # Save the best hyperparameters to a CSV file
     with open(model_dir, "w") as f:
         writer = csv.writer(f)
-        for key, value in best_results_dict.items():
+        for key, value in best_results_dict:
             writer.writerow([key, value])
 elif opt_args.results_format == "pkl":
     with open(model_dir, "wb") as f:
-        pickle.dump(best_results_dict, f)
+        pickle.dump(list(best_results_dict), f)
+
+print({numpy.pi})

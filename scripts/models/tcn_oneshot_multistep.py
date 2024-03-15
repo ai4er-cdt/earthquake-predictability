@@ -8,8 +8,11 @@ Github     : https://github.com/locuslab/TCN
 """
 
 import torch.nn as nn
-# from torch.nn.utils.parametrizations import weight_norm # depends on your version of pytorch... we should fix this
-from torch.nn.utils import weight_norm
+from torch.nn.utils.parametrizations import (
+    weight_norm,  # depends on your version of pytorch... we should fix this
+)
+
+# from torch.nn.utils import weight_norm
 
 
 class Chomp1d(nn.Module):
