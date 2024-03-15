@@ -21,14 +21,13 @@
 ## Overview
 
 Earthquakes have substantial worldwide effects, and accurate forecasting can 
-greatly assist in emergency responses and preparedness efforts. Slow 
-earthquakes, also known as Slow Slip Events (SSEs), exhibit quasi-periodic 
-patterns, making them more predictable and significant for earthquake 
-forecasting research. SSEs contribute to the moment budget, play a part in the
-seismic cycle, and may even trigger regular earthquakes. Due to the highly 
-non-linear nature of friction and the potential significance of short and 
-long-term patterns in SSEs, machine learning (ML), especially deep learning, is
-utilized.
+greatly assist in emergency responses and preparedness efforts. Slow Slip 
+Events (SSEs), exhibit quasi-periodic patterns, making them more predictable 
+and significant for earthquake forecasting research. SSEs contribute to the 
+moment budget, play a part in the seismic cycle, and may even trigger regular 
+earthquakes. Due to the highly non-linear nature of friction and the potential 
+significance of short and long-term patterns in SSEs, machine learning (ML), 
+especially deep learning, is utilized.
 
 SSEs are observed in nature, reproduced in laboratories, and simulated using 
 various techniques. Previous studies have used ML in slow earthquake research 
@@ -40,10 +39,10 @@ labquakes and Slow Slip Events (SSEs). Our study addressed three key research
 questions: (1) matching the state-of-the-art accuracy for labquake predictions 
 and improving performance through feature engineering, (2) applying our LSTM 
 and TCN models to Cascadia data for single and multiple segment forecasts, and 
-(3) investigating the impact of pre-training with simulated data and transfer 
-learning to Cascadia. We achieved a 9.4% performance enhancement for labquake 
-predictions, obtained maximum R^2 scores of 0.8729 and 0.5219 for Cascadia 
-forecasts, and found that pre-training marginally improved labquake 
+(3) investigating the impact of pre-training with simulated data and lab data 
+and transfer learning to Cascadia. We achieved a 9.4% performance enhancement 
+for labquake predictions, obtained maximum R^2 scores of 0.8729 and 0.5219 for 
+Cascadia forecasts, and found that pre-training marginally improved labquake 
 predictions. However, transfer learning results for Cascadia remained 
 inconclusive. Notably, the LSTM model consistently outperformed the TCN model 
 across all domains.
@@ -58,6 +57,10 @@ project
   * [scripts/models/](./scripts/models/) for the models developed
 * [utils/](./utils/) for the main utilities used to develop our pre-processing 
 pipeline
+
+## Data
+
+TODO
 
 ## Installation and usage
 
