@@ -481,7 +481,7 @@ def plot_all_data_results(
     plt.ylabel(y_label, fontsize=22)
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
-    # plt.legend(loc="upper right")
+    plt.legend(loc="upper right")
 
     # Display the plot
     plt.show()
